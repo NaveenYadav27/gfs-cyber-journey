@@ -580,22 +580,7 @@ Tier 3 Multiplier: 1.0
 
 const FALLBACK_RESPONSES: AIResponse[] = [
   {
-    content: `I can assist you with cybersecurity concepts across the GFS environment. Try asking me about:
-
-**Active Topics in Your Environment:**
-- 🔴 **Active Incidents:** C2 beacon on K8s node, LSASS dump on GFS-LT-1101, SQLi on Core Banking API
-- 🟡 **Pending Investigations:** Kerberoasting detection, lateral movement to SWIFT enclave
-- 📚 **Module Support:** Any of the 20 GFS training modules
-
-**Common Questions:**
-- "Explain Kerberoasting and how to detect it in Splunk"
-- "Walk me through the LSASS memory dump incident response"
-- "What CVSS score does Log4Shell have and what GFS systems are affected?"
-- "Show me SPL queries for lateral movement detection"
-- "Explain the SWIFT fraud attack chain in the capstone"
-- "How does FIDO2 prevent phishing attacks?"
-
-I operate fully offline using the GFS knowledge base. What would you like to explore?`,
+    content: `**⚠️ Simulated AI Mentor**\n\nI am an offline simulated AI mentor built for this prototype. I am not connected to a live LLM backend, so I cannot answer arbitrary questions. I only understand specific hardcoded demonstration topics.\n\n**Try asking me one of these exact phrases to see how I work:**\n- "Explain Kerberoasting and how to detect it"\n- "Walk me through the LSASS memory dump incident response"\n- "Show me SPL queries for lateral movement detection"\n- "What happened in the C2 beacon alert?"\n- "Explain the SWIFT fraud attack chain"\n- "How does FIDO2 prevent phishing?"`,
     references: [],
     confidence: 'Medium',
     suggestedActions: ['Open the SOC Console to triage active alerts', 'Launch Module 1 to begin training', 'Use SIEM Log Search to investigate incidents'],

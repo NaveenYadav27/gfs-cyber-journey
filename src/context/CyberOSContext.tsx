@@ -539,7 +539,7 @@ function reducer(state: CyberOSState, action: Action): CyberOSState {
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'cyberos_gfs_state_v5';
+const STORAGE_KEY = 'cyberos_gfs_state_v6';
 
 function loadState(): CyberOSState {
   try {

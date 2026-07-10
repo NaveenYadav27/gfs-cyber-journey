@@ -273,7 +273,7 @@ const DEFAULT_MODULE_PROGRESS: Record<number, ModuleProgress> = {};
 for (let i = 1; i <= 20; i++) {
   DEFAULT_MODULE_PROGRESS[i] = {
     moduleId: i,
-    status: i === 1 ? 'available' : 'locked',
+    status: 'available',
     quizScore: null,
     quizAttempts: 0,
     labCompleted: false,

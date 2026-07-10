@@ -108,18 +108,37 @@ function TopBar() {
           </div>
         </div>
         <nav className="hidden items-center gap-1 lg:flex">
-          {items.map((it) => (
-            <button
-              key={it.label}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                it.active
-                  ? "bg-[color:var(--surface-3)] text-[color:var(--foreground)] ring-1 ring-inset ring-[color:var(--border)]"
-                  : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
-              }`}
-            >
-              {it.label}
-            </button>
-          ))}
+          {items.map((it) => {
+            const idMap: Record<string, string> = {
+              "Enterprise Career Framework": "framework",
+              "Internal Job Board": "jobs",
+              "Departments": "departments",
+              "Career Explorer": "explorer",
+              "Skills Matrix": "skills",
+              "Learning Paths": "learning",
+            };
+            const targetId = idMap[it.label];
+            
+            return (
+              <button
+                key={it.label}
+                onClick={() => {
+                  if (targetId === "learning") {
+                    window.location.href = "/dashboard";
+                  } else {
+                    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                  it.active
+                    ? "bg-[color:var(--surface-3)] text-[color:var(--foreground)] ring-1 ring-inset ring-[color:var(--border)]"
+                    : "text-[color:var(--muted-foreground)] hover:text-[color:var(--foreground)]"
+                }`}
+              >
+                {it.label}
+              </button>
+            );
+          })}
         </nav>
         <div className="flex items-center gap-3">
           <div className="hidden text-right text-xs leading-tight md:block">
@@ -145,7 +164,7 @@ function Hero() {
     { value: "43", label: "Countries · one framework" },
   ];
   return (
-    <section className="relative overflow-hidden border-b border-[color:var(--border)]/60">
+    <section id="framework" className="relative overflow-hidden border-b border-[color:var(--border)]/60">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 pb-16 pt-14 lg:grid-cols-[1.15fr_1fr]">
         <div>
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface-2)] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted-foreground)]">
@@ -166,10 +185,10 @@ function Hero() {
             leads next.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <button className="rounded-md bg-[color:var(--primary)] px-5 py-2.5 text-sm font-semibold text-[color:var(--primary-foreground)] transition hover:brightness-110">
+            <button onClick={() => window.location.href = '/dashboard'} className="rounded-md bg-[color:var(--primary)] px-5 py-2.5 text-sm font-semibold text-[color:var(--primary-foreground)] transition hover:brightness-110">
               Open my career journey
             </button>
-            <button className="rounded-md border border-[color:var(--border)] bg-[color:var(--surface-2)] px-5 py-2.5 text-sm font-medium text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-3)]">
+            <button onClick={() => document.getElementById('jobs')?.scrollIntoView({ behavior: 'smooth' })} className="rounded-md border border-[color:var(--border)] bg-[color:var(--surface-2)] px-5 py-2.5 text-sm font-medium text-[color:var(--foreground)] transition hover:bg-[color:var(--surface-3)]">
               Browse internal jobs · 68 open
             </button>
           </div>
@@ -388,7 +407,7 @@ function DepartmentGrid() {
   const [openCode, setOpenCode] = useState<string | null>(DEPARTMENTS[0].code);
   const open = DEPARTMENTS.find((d) => d.code === openCode) ?? null;
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section id="departments" className="mx-auto max-w-7xl px-6 py-20">
       <SectionHeader
         eyebrow="Cybersecurity as a company"
         title="20 departments. One mission."
@@ -511,7 +530,7 @@ function CareerExplorer() {
   const [idx, setIdx] = useState(0);
   const track = EXPLORER_TRACKS[idx];
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section id="explorer" className="mx-auto max-w-7xl px-6 py-20">
       <SectionHeader
         eyebrow="Career Explorer"
         title="Pick a track. See exactly where it leads."
@@ -573,7 +592,7 @@ function InternalJobs() {
       (q === "" || j.title.toLowerCase().includes(q.toLowerCase())),
   );
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section id="jobs" className="mx-auto max-w-7xl px-6 py-20">
       <SectionHeader
         eyebrow="Internal Job Postings · IJP"
         title="Current internal opportunities at GFS Cybersecurity"
@@ -792,7 +811,7 @@ const MATRIX_ROLES = [
 
 function SkillsMatrix() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section id="skills" className="mx-auto max-w-7xl px-6 py-20">
       <SectionHeader
         eyebrow="Skills Matrix"
         title="Every skill mapped to every role."

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useCyberOS } from '@/context/CyberOSContext';
 import { getModuleById } from '@/data/curriculum';
+import { queryAIWithDelay } from '@/services/LocalAIService';
 import { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, Terminal, FileText, CheckCircle, Lock, Play, HelpCircle, AlertTriangle, ShieldCheck
@@ -83,8 +84,25 @@ function ModuleDetail() {
     if (cmd.toLowerCase() === 'help') {
       setLabOutput(prev => [...prev, { 
         type: 'info', 
-        text: `Available commands:\n  clear  — clear terminal\n  help   — show this message\n  hint   — show a hint for the current step\n  steps  — list all lab steps\n  flag <value> — submit the final lab flag\n\nCurrent step ${currentStepNumber}/${module.labSteps.length}: ${currentStep?.title || 'All steps complete — submit your flag!'}` 
+        text: `Available commands:\n  clear  — clear terminal\n  help   — show this message\n  hint   — show a hint for the current step\n  mentor <query> — ask the AI Copilot for guidance\n  steps  — list all lab steps\n  flag <value> — submit the final lab flag\n\nCurrent step ${currentStepNumber}/${module.labSteps.length}: ${currentStep?.title || 'All steps complete — submit your flag!'}` 
       }]);
+      setLabInput('');
+      return;
+    }
+    if (cmd.toLowerCase().startsWith('mentor ')) {
+      const query = cmd.slice(7).trim();
+      setLabOutput(prev => [...prev, { type: 'info', text: `Consulting AI Mentor...` }]);
+      
+      queryAIWithDelay(query).then(response => {
+        let fullResponse = response.content;
+        if (response.suggestedActions?.length) {
+          fullResponse += '\n\nActions:\n' + response.suggestedActions.map(a => `- ${a}`).join('\n');
+        }
+        setLabOutput(prev => [...prev, { type: 'info', text: `💡 AI Mentor:\n${fullResponse}` }]);
+      }).catch(() => {
+        setLabOutput(prev => [...prev, { type: 'error', text: 'AI Mentor unavailable.' }]);
+      });
+      
       setLabInput('');
       return;
     }

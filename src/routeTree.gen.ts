@@ -9,38 +9,185 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSocRouteImport } from './routes/_app.soc'
+import { Route as AppSiemRouteImport } from './routes/_app.siem'
+import { Route as AppRangeRouteImport } from './routes/_app.range'
+import { Route as AppModulesRouteImport } from './routes/_app.modules'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCopilotRouteImport } from './routes/_app.copilot'
+import { Route as AppAchievementsRouteImport } from './routes/_app.achievements'
+import { Route as AppSocIndexRouteImport } from './routes/_app.soc.index'
+import { Route as AppModulesIndexRouteImport } from './routes/_app.modules.index'
+import { Route as AppSocAlertIdRouteImport } from './routes/_app.soc.$alertId'
+import { Route as AppModulesModuleIdRouteImport } from './routes/_app.modules.$moduleId'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSocRoute = AppSocRouteImport.update({
+  id: '/soc',
+  path: '/soc',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSiemRoute = AppSiemRouteImport.update({
+  id: '/siem',
+  path: '/siem',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRangeRoute = AppRangeRouteImport.update({
+  id: '/range',
+  path: '/range',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppModulesRoute = AppModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCopilotRoute = AppCopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAchievementsRoute = AppAchievementsRouteImport.update({
+  id: '/achievements',
+  path: '/achievements',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSocIndexRoute = AppSocIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSocRoute,
+} as any)
+const AppModulesIndexRoute = AppModulesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppModulesRoute,
+} as any)
+const AppSocAlertIdRoute = AppSocAlertIdRouteImport.update({
+  id: '/$alertId',
+  path: '/$alertId',
+  getParentRoute: () => AppSocRoute,
+} as any)
+const AppModulesModuleIdRoute = AppModulesModuleIdRouteImport.update({
+  id: '/$moduleId',
+  path: '/$moduleId',
+  getParentRoute: () => AppModulesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/achievements': typeof AppAchievementsRoute
+  '/copilot': typeof AppCopilotRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/modules': typeof AppModulesRouteWithChildren
+  '/range': typeof AppRangeRoute
+  '/siem': typeof AppSiemRoute
+  '/soc': typeof AppSocRouteWithChildren
+  '/modules/$moduleId': typeof AppModulesModuleIdRoute
+  '/soc/$alertId': typeof AppSocAlertIdRoute
+  '/modules/': typeof AppModulesIndexRoute
+  '/soc/': typeof AppSocIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/achievements': typeof AppAchievementsRoute
+  '/copilot': typeof AppCopilotRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/range': typeof AppRangeRoute
+  '/siem': typeof AppSiemRoute
+  '/modules/$moduleId': typeof AppModulesModuleIdRoute
+  '/soc/$alertId': typeof AppSocAlertIdRoute
+  '/modules': typeof AppModulesIndexRoute
+  '/soc': typeof AppSocIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/achievements': typeof AppAchievementsRoute
+  '/_app/copilot': typeof AppCopilotRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/modules': typeof AppModulesRouteWithChildren
+  '/_app/range': typeof AppRangeRoute
+  '/_app/siem': typeof AppSiemRoute
+  '/_app/soc': typeof AppSocRouteWithChildren
+  '/_app/modules/$moduleId': typeof AppModulesModuleIdRoute
+  '/_app/soc/$alertId': typeof AppSocAlertIdRoute
+  '/_app/modules/': typeof AppModulesIndexRoute
+  '/_app/soc/': typeof AppSocIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/achievements'
+    | '/copilot'
+    | '/dashboard'
+    | '/modules'
+    | '/range'
+    | '/siem'
+    | '/soc'
+    | '/modules/$moduleId'
+    | '/soc/$alertId'
+    | '/modules/'
+    | '/soc/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/achievements'
+    | '/copilot'
+    | '/dashboard'
+    | '/range'
+    | '/siem'
+    | '/modules/$moduleId'
+    | '/soc/$alertId'
+    | '/modules'
+    | '/soc'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/achievements'
+    | '/_app/copilot'
+    | '/_app/dashboard'
+    | '/_app/modules'
+    | '/_app/range'
+    | '/_app/siem'
+    | '/_app/soc'
+    | '/_app/modules/$moduleId'
+    | '/_app/soc/$alertId'
+    | '/_app/modules/'
+    | '/_app/soc/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +195,149 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/soc': {
+      id: '/_app/soc'
+      path: '/soc'
+      fullPath: '/soc'
+      preLoaderRoute: typeof AppSocRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/siem': {
+      id: '/_app/siem'
+      path: '/siem'
+      fullPath: '/siem'
+      preLoaderRoute: typeof AppSiemRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/range': {
+      id: '/_app/range'
+      path: '/range'
+      fullPath: '/range'
+      preLoaderRoute: typeof AppRangeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/modules': {
+      id: '/_app/modules'
+      path: '/modules'
+      fullPath: '/modules'
+      preLoaderRoute: typeof AppModulesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/copilot': {
+      id: '/_app/copilot'
+      path: '/copilot'
+      fullPath: '/copilot'
+      preLoaderRoute: typeof AppCopilotRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/achievements': {
+      id: '/_app/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AppAchievementsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/soc/': {
+      id: '/_app/soc/'
+      path: '/'
+      fullPath: '/soc/'
+      preLoaderRoute: typeof AppSocIndexRouteImport
+      parentRoute: typeof AppSocRoute
+    }
+    '/_app/modules/': {
+      id: '/_app/modules/'
+      path: '/'
+      fullPath: '/modules/'
+      preLoaderRoute: typeof AppModulesIndexRouteImport
+      parentRoute: typeof AppModulesRoute
+    }
+    '/_app/soc/$alertId': {
+      id: '/_app/soc/$alertId'
+      path: '/$alertId'
+      fullPath: '/soc/$alertId'
+      preLoaderRoute: typeof AppSocAlertIdRouteImport
+      parentRoute: typeof AppSocRoute
+    }
+    '/_app/modules/$moduleId': {
+      id: '/_app/modules/$moduleId'
+      path: '/$moduleId'
+      fullPath: '/modules/$moduleId'
+      preLoaderRoute: typeof AppModulesModuleIdRouteImport
+      parentRoute: typeof AppModulesRoute
+    }
   }
 }
 
+interface AppModulesRouteChildren {
+  AppModulesModuleIdRoute: typeof AppModulesModuleIdRoute
+  AppModulesIndexRoute: typeof AppModulesIndexRoute
+}
+
+const AppModulesRouteChildren: AppModulesRouteChildren = {
+  AppModulesModuleIdRoute: AppModulesModuleIdRoute,
+  AppModulesIndexRoute: AppModulesIndexRoute,
+}
+
+const AppModulesRouteWithChildren = AppModulesRoute._addFileChildren(
+  AppModulesRouteChildren,
+)
+
+interface AppSocRouteChildren {
+  AppSocAlertIdRoute: typeof AppSocAlertIdRoute
+  AppSocIndexRoute: typeof AppSocIndexRoute
+}
+
+const AppSocRouteChildren: AppSocRouteChildren = {
+  AppSocAlertIdRoute: AppSocAlertIdRoute,
+  AppSocIndexRoute: AppSocIndexRoute,
+}
+
+const AppSocRouteWithChildren =
+  AppSocRoute._addFileChildren(AppSocRouteChildren)
+
+interface AppRouteChildren {
+  AppAchievementsRoute: typeof AppAchievementsRoute
+  AppCopilotRoute: typeof AppCopilotRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppModulesRoute: typeof AppModulesRouteWithChildren
+  AppRangeRoute: typeof AppRangeRoute
+  AppSiemRoute: typeof AppSiemRoute
+  AppSocRoute: typeof AppSocRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAchievementsRoute: AppAchievementsRoute,
+  AppCopilotRoute: AppCopilotRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppModulesRoute: AppModulesRouteWithChildren,
+  AppRangeRoute: AppRangeRoute,
+  AppSiemRoute: AppSiemRoute,
+  AppSocRoute: AppSocRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

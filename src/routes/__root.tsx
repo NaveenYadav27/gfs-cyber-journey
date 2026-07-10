@@ -77,11 +77,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "CyberOS Enterprise · Build Your Career at GFS" },
+      {
+        name: "description",
+        content:
+          "Enterprise Cybersecurity Career Framework at Global Financial Services. Explore 40+ roles, 20 departments, and every path from Associate to CISO.",
+      },
+      { name: "author", content: "GFS · CyberOS Enterprise" },
+      { property: "og:title", content: "CyberOS Enterprise · Build Your Career at GFS" },
+      {
+        property: "og:description",
+        content:
+          "From Technology Foundations to Executive Leadership. Explore every cybersecurity career path inside GFS.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },

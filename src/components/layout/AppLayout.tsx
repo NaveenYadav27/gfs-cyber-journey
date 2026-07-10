@@ -16,7 +16,7 @@ import {
 import { useState } from 'react';
 
 export function AppLayout() {
-  const { state, getOpenAlertCount } = useCyberOS();
+  const { state, dispatch, getOpenAlertCount } = useCyberOS();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouterState();
 
@@ -125,6 +125,10 @@ export function AppLayout() {
             className={`flex items-center w-full ${
               sidebarOpen ? 'px-3' : 'justify-center'
             } py-2 text-slate-400 hover:text-red-400 hover:bg-red-900/20 rounded-md`}
+            onClick={() => {
+              dispatch({ type: 'RESET_ALL' });
+              window.location.href = '/';
+            }}
           >
             <LogOut size={20} />
             {sidebarOpen && <span className="ml-3 text-sm">Log Out</span>}

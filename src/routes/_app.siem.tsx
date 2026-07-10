@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCyberOS } from '@/context/CyberOSContext';
 import { useState, useRef, useEffect } from 'react';
-import { Search, Database, Clock, Download, Play, Filter, Activity, Server, AlertTriangle } from 'lucide-react';
+import { Search, Database, Clock, Activity, Server, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 

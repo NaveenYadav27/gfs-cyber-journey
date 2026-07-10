@@ -152,7 +152,19 @@ function SocAlertDetail() {
                   <ShieldAlert size={32} className="mx-auto text-amber-500 mb-3" />
                   <h3 className="font-semibold text-white mb-2">Containment</h3>
                   <p className="text-xs text-slate-400 mb-4">Isolate asset from GFS enterprise network</p>
-                  <Button variant="outline" className="w-full bg-slate-800 border-slate-700 hover:bg-amber-900/30 hover:text-amber-400 transition-colors">
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-slate-800 border-slate-700 hover:bg-amber-900/30 hover:text-amber-400 transition-colors"
+                    onClick={() => {
+                      dispatch({ 
+                        type: 'UPDATE_SOC_ALERT', 
+                        alertId: alert.id, 
+                        status: alert.status === 'Open' ? 'In_Progress' : alert.status, 
+                        note: `Host isolation executed on ${alert.affectedAsset} via CrowdStrike Falcon containment API. Asset removed from network.` 
+                      });
+                    }}
+                    disabled={alert.status === 'Closed' || alert.status === 'False_Positive'}
+                  >
                     Execute Host Isolation
                   </Button>
                 </CardContent>

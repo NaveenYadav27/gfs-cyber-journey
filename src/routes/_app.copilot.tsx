@@ -56,11 +56,11 @@ How can I assist you today?`
       let fullResponse = response.content;
       
       if (response.suggestedActions && response.suggestedActions.length > 0) {
-        fullResponse += '\\n\\n**Suggested Actions:**\\n' + response.suggestedActions.map(a => `- ${a}`).join('\\n');
+        fullResponse += '\n\n**Suggested Actions:**\n' + response.suggestedActions.map(a => `- ${a}`).join('\n');
       }
       
       if (response.references && response.references.length > 0) {
-        fullResponse += '\\n\\n*References: ' + response.references.join(', ') + '*';
+        fullResponse += '\n\n*References: ' + response.references.join(', ') + '*';
       }
 
       dispatch({ type: 'ADD_AI_MESSAGE', role: 'assistant', content: fullResponse });
@@ -76,14 +76,26 @@ How can I assist you today?`
   };
 
   const formatMessageContent = (content: string) => {
-    // Basic markdown formatting for bold, code blocks, lists
-    const formatted = content
-      .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-      .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
-      .replace(/\\n/g, '<br/>')
-      .replace(/\\`\\`\\`([\\s\\S]*?)\\`\\`\\`/g, '<pre class="bg-slate-950 border border-slate-800 p-3 rounded-md my-2 overflow-x-auto text-blue-400 font-mono text-xs"><code>$1</code></pre>')
-      .replace(/\\`([^`]+)\\`/g, '<code class="bg-slate-800 px-1.5 py-0.5 rounded text-blue-300 font-mono text-xs">$1</code>');
-      
+    // Escape HTML first to prevent XSS, then apply markdown
+    const escaped = content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const formatted = escaped
+      // Code blocks (must come before inline code)
+      .replace(/```([\s\S]*?)```/g, '<pre class="bg-slate-950 border border-slate-800 p-3 rounded-md my-2 overflow-x-auto text-blue-400 font-mono text-xs whitespace-pre"><code>$1</code></pre>')
+      // Inline code
+      .replace(/`([^`\n]+)`/g, '<code class="bg-slate-800 px-1.5 py-0.5 rounded text-blue-300 font-mono text-xs">$1</code>')
+      // Bold
+      .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white">$1</strong>')
+      // Italic
+      .replace(/\*([^*\n]+)\*/g, '<em class="text-slate-300">$1</em>')
+      // Bullet list items
+      .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-slate-300">$1</li>')
+      // Newlines to <br> (but not inside pre blocks)
+      .replace(/\n/g, '<br/>');
+
     return { __html: formatted };
   };
 

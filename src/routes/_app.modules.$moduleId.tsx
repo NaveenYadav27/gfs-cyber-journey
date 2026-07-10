@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useCyberOS } from '@/context/CyberOSContext';
 import { getModuleById } from '@/data/curriculum';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, Terminal, FileText, CheckCircle, Lock, Play, HelpCircle, AlertTriangle, ShieldCheck
 } from 'lucide-react';
@@ -25,7 +25,15 @@ function ModuleDetail() {
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [labInput, setLabInput] = useState('');
-  const [labOutput, setLabOutput] = useState<{ type: 'command' | 'output' | 'error' | 'success'; text: string }[]>([]);
+  const [labOutput, setLabOutput] = useState<{ type: 'command' | 'output' | 'error' | 'success' | 'info'; text: string }[]>([]);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const terminalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [labOutput]);
 
   useEffect(() => {
     if (!module || progress?.status === 'locked') {
@@ -35,10 +43,15 @@ function ModuleDetail() {
 
   if (!module || progress?.status === 'locked') return null;
 
+  // Current step is the first step not yet completed
+  const currentStepNumber = completedSteps.length + 1;
+  const currentStep = module.labSteps.find(s => s.stepNumber === currentStepNumber);
+
   const handleStartModule = () => {
     if (progress.status === 'available') {
       dispatch({ type: 'START_MODULE', moduleId: id });
     }
+    setLabOutput([{ type: 'info', text: `GFS Cyber Range initialized. Module ${module.id}: ${module.title}\nType 'help' for available commands. Complete each step in order.\nCurrent objective: ${module.labSteps[0]?.title || 'See steps below'}` }]);
     setActiveTab('lab');
   };
 
@@ -58,22 +71,71 @@ function ModuleDetail() {
     e.preventDefault();
     if (!labInput.trim()) return;
 
-    const currentStep = module.labSteps.find(s => !progress.labFlag || progress.labFlag !== module.flagHash);
-    
-    setLabOutput(prev => [...prev, { type: 'command', text: labInput }]);
+    const cmd = labInput.trim();
+    setLabOutput(prev => [...prev, { type: 'command', text: cmd }]);
 
-    // Very basic command simulation
-    if (labInput === module.flagHash) {
-      setLabOutput(prev => [...prev, { type: 'success', text: 'FLAG ACCEPTED. Lab objective complete.' }]);
-      dispatch({ type: 'COMPLETE_LAB', moduleId: id, flag: labInput });
-    } else if (currentStep?.command && labInput === currentStep.command) {
-      setLabOutput(prev => [...prev, { type: 'output', text: currentStep.expectedOutput || 'Command executed successfully.' }]);
-    } else if (labInput.toLowerCase() === 'help') {
-      setLabOutput(prev => [...prev, { type: 'output', text: 'Available commands: clear, help. To submit flag, just enter the flag string.' }]);
-    } else if (labInput.toLowerCase() === 'clear') {
+    // Special commands first
+    if (cmd.toLowerCase() === 'clear') {
       setLabOutput([]);
+      setLabInput('');
+      return;
+    }
+    if (cmd.toLowerCase() === 'help') {
+      setLabOutput(prev => [...prev, { 
+        type: 'info', 
+        text: `Available commands:\n  clear  — clear terminal\n  help   — show this message\n  hint   — show a hint for the current step\n  steps  — list all lab steps\n  flag <value> — submit the final lab flag\n\nCurrent step ${currentStepNumber}/${module.labSteps.length}: ${currentStep?.title || 'All steps complete — submit your flag!'}` 
+      }]);
+      setLabInput('');
+      return;
+    }
+    if (cmd.toLowerCase() === 'steps') {
+      const stepList = module.labSteps.map(s => 
+        `  [${completedSteps.includes(s.stepNumber) ? '✓' : s.stepNumber === currentStepNumber ? '►' : ' '}] Step ${s.stepNumber}: ${s.title}`
+      ).join('\n');
+      setLabOutput(prev => [...prev, { type: 'info', text: `Lab Steps:\n${stepList}` }]);
+      setLabInput('');
+      return;
+    }
+    if (cmd.toLowerCase() === 'hint' && currentStep) {
+      dispatch({ type: 'USE_HINT', moduleId: id });
+      setLabOutput(prev => [...prev, { type: 'info', text: `💡 Hint: ${currentStep.hint}` }]);
+      setLabInput('');
+      return;
+    }
+
+    // Flag submission
+    if (cmd.startsWith('flag ') || cmd === module.flagHash) {
+      const submittedFlag = cmd.startsWith('flag ') ? cmd.slice(5).trim() : cmd;
+      if (submittedFlag === module.flagHash || cmd === module.flagHash) {
+        setLabOutput(prev => [...prev, { type: 'success', text: `✓ FLAG ACCEPTED: ${module.flagHash}\nLab complete! XP awarded. Proceed to the Knowledge Check quiz.` }]);
+        dispatch({ type: 'COMPLETE_LAB', moduleId: id, flag: module.flagHash });
+      } else {
+        setLabOutput(prev => [...prev, { type: 'error', text: `✗ Incorrect flag. Review the lab steps and try again.` }]);
+      }
+      setLabInput('');
+      return;
+    }
+
+    // Match current step command
+    if (currentStep?.command && cmd === currentStep.command) {
+      setLabOutput(prev => [...prev, { 
+        type: 'output', 
+        text: currentStep.expectedOutput || 'Command executed successfully.'
+      }]);
+      setCompletedSteps(prev => [...prev, currentStep.stepNumber]);
+      const nextStep = module.labSteps.find(s => s.stepNumber === currentStepNumber + 1);
+      if (nextStep) {
+        setLabOutput(prev => [...prev, { type: 'info', text: `✓ Step ${currentStep.stepNumber} complete!\n► Next: ${nextStep.title}\n   ${nextStep.instruction}` }]);
+      } else {
+        setLabOutput(prev => [...prev, { type: 'info', text: `✓ All steps complete! Submit the lab flag:\n   flag ${module.flagHash}` }]);
+      }
+    } else if (currentStep) {
+      setLabOutput(prev => [...prev, { 
+        type: 'error', 
+        text: `Command not recognized in this context. Step ${currentStepNumber}: ${currentStep.title}\nExpected input: ${currentStep.instruction}\nType 'hint' for a clue.` 
+      }]);
     } else {
-      setLabOutput(prev => [...prev, { type: 'error', text: `Command '${labInput}' not found or invalid in this context.` }]);
+      setLabOutput(prev => [...prev, { type: 'error', text: `Unknown command: ${cmd}` }]);
     }
     
     setLabInput('');
@@ -263,7 +325,7 @@ function ModuleDetail() {
                     <div className="mx-auto text-xs text-slate-500 font-mono">root@gfs-cyber-range:~</div>
                   </div>
                   
-                  <div className="flex-1 p-4 overflow-y-auto font-mono text-sm">
+                  <div className="flex-1 p-4 overflow-y-auto font-mono text-sm" ref={terminalRef}>
                     <div className="text-emerald-500 mb-4">
                       GFS Enterprise CyberOS Interactive Range [Version 5.0.22]<br/>
                       (c) 2026 Global Financial Services. All rights reserved.<br/><br/>
@@ -280,8 +342,9 @@ function ModuleDetail() {
                           </div>
                         )}
                         {out.type === 'output' && <div className="text-slate-400 whitespace-pre-wrap ml-2 mt-1">{out.text}</div>}
-                        {out.type === 'error' && <div className="text-red-400 ml-2 mt-1">{out.text}</div>}
-                        {out.type === 'success' && <div className="text-amber-400 font-bold ml-2 mt-1">{out.text}</div>}
+                        {out.type === 'error' && <div className="text-red-400 whitespace-pre-wrap ml-2 mt-1">{out.text}</div>}
+                        {out.type === 'success' && <div className="text-amber-400 font-bold whitespace-pre-wrap ml-2 mt-1">{out.text}</div>}
+                        {out.type === 'info' && <div className="text-cyan-400 whitespace-pre-wrap ml-2 mt-1 opacity-80">{out.text}</div>}
                       </div>
                     ))}
                   </div>

@@ -150,7 +150,7 @@ function ModuleDetail() {
     } else if (currentStep) {
       setLabOutput(prev => [...prev, { 
         type: 'error', 
-        text: `Command not recognized in this context. Step ${currentStepNumber}: ${currentStep.title}\nExpected input: ${currentStep.instruction}\nType 'hint' for a clue.` 
+        text: `Command not recognized for Step ${currentStepNumber}: ${currentStep.title}\nType 'hint' for a clue or check the Reference Materials.` 
       }]);
     } else {
       setLabOutput(prev => [...prev, { type: 'error', text: `Unknown command: ${cmd}` }]);

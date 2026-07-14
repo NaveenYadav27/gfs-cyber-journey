@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShadowXLab — Reconnaissance Experience Platform</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg0:#080c18;--bg1:#0d1225;--bg2:#111830;--bg3:#182040;
+--glass:rgba(17,24,48,.55);--glass2:rgba(24,32,64,.45);
+--b1:rgba(80,120,255,.12);--b2:rgba(80,120,255,.28);
+--t1:#e8ecf8;--t2:#9aa4cc;--t3:#5868a0;
+--a:#4f7cff;--al:#7ea0ff;--ag:rgba(79,124,255,.3);
+--ok:#00e676;--warn:#ffb300;--err:#ff5252;--inf:#40c4ff;
+--ga:linear-gradient(135deg,#4f7cff,#7c4dff);
+--r:12px;--rs:8px;--rx:6px;
+--tr:all .25s cubic-bezier(.4,0,.2,1);
+--f:'Segoe UI',system-ui,-apple-system,sans-serif;
+--fm:'Cascadia Code','Fira Code',Consolas,monospace;
+--sbw:280px;--hh:52px}
+html{font-size:14px}
+body{font-family:var(--f);background:var(--bg0);color:var(--t1);min-height:100vh;overflow-x:hidden;line-height:1.6}
+a{color:var(--al);text-decoration:none}
+code,pre{font-family:var(--fm)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+::selection{background:var(--a);color:#fff}
+h1,h2,h3,h4{font-weight:600;line-height:1.3}
+
+/* LAYOUT */
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:var(--sbw);min-width:var(--sbw);background:var(--bg1);border-right:1px solid var(--b1);display:flex;flex-direction:column;z-index:100}
+#sb-head{height:var(--hh);display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--b1);gap:8px}
+.logo{width:26px;height:26px;background:var(--ga);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;flex-shrink:0}
+.brand{font-size:12px;font-weight:700}.brand small{display:block;font-size:9px;font-weight:400;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+#sb-nav{flex:1;overflow-y:auto;padding:6px}
+.ng{margin-bottom:2px}
+.ng-t{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);padding:10px 10px 3px;font-weight:700}
+.ni{display:flex;align-items:center;padding:7px 10px;border-radius:var(--rx);cursor:pointer;transition:var(--tr);gap:7px;font-size:12px;color:var(--t2);position:relative}
+.ni:hover{background:rgba(79,124,255,.07);color:var(--t1)}
+.ni.on{background:rgba(79,124,255,.13);color:var(--al)}
+.ni.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:55%;background:var(--a);border-radius:0 2px 2px 0}
+.ni-i{width:16px;text-align:center;font-size:13px;flex-shrink:0}
+.ni-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ni-b{margin-left:auto;background:var(--a);color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#hdr{height:var(--hh);display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--b1);gap:12px;background:var(--bg1)}
+#bc{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:5px}
+.bc-s{opacity:.4}.bc-c{color:var(--t1);font-weight:600}
+#hdr-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.hb{background:var(--glass);border:1px solid var(--b1);color:var(--t2);padding:5px 10px;border-radius:var(--rx);cursor:pointer;font-size:10px;transition:var(--tr);display:flex;align-items:center;gap:4px}
+.hb:hover{border-color:var(--a);color:var(--al)}
+.xp{background:var(--ga);color:#fff;padding:3px 10px;border-radius:16px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px}
+
+/* CONTENT */
+#cnt{flex:1;overflow-y:auto;padding:20px}
+.sec{display:none;animation:fi .35s ease}
+.sec.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.cd{background:var(--glass);border:1px solid var(--b1);border-radius:var(--r);padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:var(--tr)}
+.cd:hover{border-color:var(--b2);box-shadow:0 0 16px var(--ag)}
+.cd-h{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.cd-h .ic{width:34px;height:34px;background:var(--ga);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:15px}
+.cd-h h3{font-size:14px}.cd-h .tg{margin-left:auto;font-size:8px;padding:2px 7px;border-radius:8px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.tg-p{background:rgba(0,230,118,.12);color:var(--ok)}.tg-a{background:rgba(255,82,82,.12);color:var(--err)}.tg-o{background:rgba(64,196,255,.12);color:var(--inf)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+
+/* STAT */
+.st{background:var(--glass);border:1px solid var(--b1);border-radius:var(--r);padding:14px;text-align:center;transition:var(--tr)}
+.st:hover{border-color:var(--a);transform:translateY(-2px)}
+.st-v{font-size:26px;font-weight:700;background:var(--ga);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.st-l{font-size:10px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:1px}
+
+/* TABS */
+.tbs{display:flex;gap:2px;border-bottom:1px solid var(--b1);margin-bottom:14px;overflow-x:auto}
+.tb{padding:9px 14px;font-size:11px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:var(--tr);white-space:nowrap}
+.tb:hover{color:var(--t1)}.tb.on{color:var(--al);border-bottom-color:var(--a)}
+.tc{display:none;animation:fi .25s ease}.tc.on{display:block}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--rx);font-size:11px;font-weight:600;cursor:pointer;transition:var(--tr);border:1px solid transparent}
+.btn-p{background:var(--ga);color:#fff;border:none}.btn-p:hover{box-shadow:0 0 14px var(--ag);transform:translateY(-1px)}
+.btn-o{background:transparent;border:1px solid var(--b2);color:var(--al)}.btn-o:hover{background:rgba(79,124,255,.08)}
+.btn-s{padding:4px 9px;font-size:10px}
+.bg{display:flex;gap:6px;flex-wrap:wrap}
+
+/* TERMINAL */
+.term{background:#0c1017;border:1px solid #1e2535;border-radius:var(--rs);overflow:hidden;font-family:var(--fm);font-size:11.5px}
+.term-h{background:#151c28;padding:7px 10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #1e2535}
+.td{width:9px;height:9px;border-radius:50%}.td-r{background:#ff5f57}.td-y{background:#febc2e}.td-g{background:#28c840}
+.term-t{color:#6b7280;font-size:10px;margin-left:6px}
+.term-b{padding:10px;max-height:380px;overflow-y:auto;color:#c9d1d9;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.term-b .p{color:#58a6ff}.term-b .o{color:#8b949e}.term-b .h{color:#7ee787}.term-b .e{color:#ff7b72}.term-b .i{color:#58a6ff}
+.term-i{display:flex;align-items:center;padding:7px 10px;border-top:1px solid #1e2535;background:#0c1017}
+.term-i .p{color:#58a6ff;margin-right:6px}
+.term-i input{flex:1;background:transparent;border:none;color:#f0f6fc;font-family:var(--fm);font-size:11.5px;outline:none}
+
+/* PROGRESS */
+.pbar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.pbar .f{height:100%;background:var(--ga);border-radius:3px;transition:width .5s}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:1000;align-items:center;justify-content:center}
+.mo.show{display:flex}
+.md{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r);max-width:780px;width:92%;max-height:82vh;overflow-y:auto;animation:mi .25s ease}
+@keyframes mi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.md-h{padding:14px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.md-h h3{font-size:14px}
+.md-c{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:3px}.md-c:hover{color:var(--t1)}
+.md-b{padding:18px}
+
+/* SVG */
+.svg-c{width:100%;overflow-x:auto;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--b1);padding:6px}
+.svg-c svg{display:block;margin:0 auto}
+.sn{cursor:pointer}.sn:hover rect,.sn:hover .nb{stroke:var(--a);stroke-width:2;filter:drop-shadow(0 0 6px var(--ag))}
+.sn .nb{fill:var(--bg2);stroke:var(--b2);stroke-width:1.5;rx:8}
+.sn .nl{fill:var(--t1);font-size:11px;font-family:var(--f);text-anchor:middle;dominant-baseline:central}
+.sn .ni2{font-size:15px;text-anchor:middle;dominant-baseline:central}
+.sl{stroke:var(--b2);stroke-width:1;stroke-dasharray:4 4;opacity:.4}
+.sl.on{stroke:var(--a);stroke-dasharray:none;opacity:.8;stroke-width:1.5}
+
+/* FLASHCARD */
+.fc{perspective:1000px;height:180px;cursor:pointer}
+.fc-i{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.fc.fl .fc-i{transform:rotateX(180deg)}
+.fc-f,.fc-b{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);display:flex;align-items:center;justify-content:center;padding:18px;text-align:center;font-size:13px;line-height:1.6}
+.fc-f{background:var(--glass2);border:1px solid var(--b1)}
+.fc-b{background:var(--ga);color:#fff;transform:rotateX(180deg)}
+
+/* QUIZ */
+.qo{display:block;padding:11px 14px;margin:5px 0;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rx);cursor:pointer;transition:var(--tr);font-size:12px}
+.qo:hover{border-color:var(--a);background:rgba(79,124,255,.06)}
+.qo.ok{border-color:var(--ok);background:rgba(0,230,118,.08);color:var(--ok)}
+.qo.bad{border-color:var(--err);background:rgba(255,82,82,.08);color:var(--err)}
+.qo.sel{border-color:var(--a)}
+
+/* SEARCH */
+.sbox{position:relative;margin-bottom:14px}
+.sbox input{width:100%;padding:9px 10px 9px 32px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rx);color:var(--t1);font-size:12px;outline:none;transition:var(--tr)}
+.sbox input:focus{border-color:var(--a);box-shadow:0 0 0 2px var(--ag)}
+.sbox .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px}
+
+/* ACCORDION */
+.ai2{border:1px solid var(--b1);border-radius:var(--rx);margin-bottom:6px;overflow:hidden}
+.ah{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;background:var(--glass);transition:var(--tr);font-size:12px;font-weight:600}
+.ah:hover{background:rgba(79,124,255,.06)}
+.ah .aw{margin-left:auto;transition:transform .25s;font-size:11px}
+.ai2.open .ah .aw{transform:rotate(90deg)}
+.ab{display:none;padding:14px;font-size:12px;line-height:1.8}
+.ai2.open .ab{display:block}
+
+/* AI TUTOR */
+#ait{position:fixed;right:20px;bottom:20px;z-index:500;width:400px;max-height:560px;display:none;flex-direction:column;background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#ait.show{display:flex;animation:su .25s ease}
+@keyframes su{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+#ait-h{padding:10px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px}
+#ait-h .av{width:28px;height:28px;background:var(--ga);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
+#ait-h .inf h4{font-size:12px;font-weight:600}#ait-h .inf small{font-size:9px;color:var(--t3)}
+#ait-body{flex:1;overflow-y:auto;padding:12px;max-height:340px}
+.am{margin-bottom:10px;padding:9px 12px;border-radius:var(--rs);font-size:11.5px;line-height:1.7}
+.am.a{background:var(--glass);border:1px solid var(--b1)}.am.u{background:rgba(79,124,255,.12);margin-left:36px;text-align:right}
+#ait-in{padding:10px 14px;border-top:1px solid var(--b1);display:flex;gap:6px}
+#ait-in input{flex:1;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rx);padding:7px 10px;color:var(--t1);font-size:11px;outline:none}
+#ait-in input:focus{border-color:var(--a)}
+.ai-lbs{display:flex;gap:3px;flex-wrap:wrap;padding:6px 14px;border-top:1px solid var(--b1)}
+.ai-lb{background:var(--glass);border:1px solid var(--b1);color:var(--t2);padding:3px 7px;border-radius:10px;font-size:9px;cursor:pointer;transition:var(--tr)}
+.ai-lb:hover{border-color:var(--a);color:var(--al)}
+#aitog{position:fixed;right:20px;bottom:20px;z-index:499;width:46px;height:46px;border-radius:50%;background:var(--ga);border:none;color:#fff;font-size:18px;cursor:pointer;box-shadow:0 0 16px var(--ag);display:flex;align-items:center;justify-content:center;transition:var(--tr)}
+#aitog:hover{transform:scale(1.08)}
+
+/* BADGE */
+.bgc{background:var(--glass);border:1px solid var(--b1);border-radius:var(--r);padding:14px;text-align:center;transition:var(--tr);opacity:.35}
+.bgc.earn{opacity:1;border-color:var(--a)}
+.bgc .bi{font-size:28px;margin-bottom:6px}.gc .bn{font-size:10px;font-weight:600;color:var(--t2)}.bgc .bd{font-size:9px;color:var(--t3);margin-top:3px}
+
+/* TABLES */
+.dtbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.dtbl th{background:var(--bg2);padding:9px 10px;text-align:left;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-size:9px;border-bottom:1px solid var(--b1)}
+.dtbl td{padding:9px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}
+.dtbl tr:hover td{background:rgba(79,124,255,.03)}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--b1)}
+.tli{position:relative;margin-bottom:14px}
+.tli::before{content:'';position:absolute;left:-18px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--a);border:2px solid var(--bg0)}
+.tli h4{font-size:12px;font-weight:600;margin-bottom:3px}.tli p{font-size:11px;color:var(--t2)}
+
+/* DASH */
+.dr{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.dm{flex:1;min-width:140px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs);padding:12px}
+.dm .ml{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}.dm .mv{font-size:20px;font-weight:700;margin:3px 0}
+.mup{color:var(--ok)}.mdn{color:var(--err)}
+
+/* HERO */
+.hero{background:var(--glass2);border:1px solid var(--b1);border-radius:var(--r);padding:28px;margin-bottom:20px;text-align:center}
+.hero h1{font-size:22px;margin-bottom:6px}.hero p{color:var(--t2);font-size:13px;max-width:680px;margin:0 auto}
+
+/* TOAST */
+#tc2{position:fixed;top:60px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:6px}
+.tst{padding:10px 16px;border-radius:var(--rs);font-size:11px;animation:fi .25s ease;box-shadow:0 4px 16px rgba(0,0,0,.4);max-width:300px}
+.tst-ok{background:#0d2818;border:1px solid var(--ok);color:var(--ok)}
+.tst-inf{background:#0d1b2a;border:1px solid var(--inf);color:var(--inf)}
+
+/* INFOBOX */
+.ib{background:rgba(64,196,255,.06);border-left:3px solid var(--inf);padding:10px 14px;border-radius:0 var(--rx) var(--rx) 0;margin:10px 0;font-size:11.5px}
+.wb{background:rgba(255,176,0,.06);border-left:3px solid var(--warn);padding:10px 14px;border-radius:0 var(--rx) var(--rx) 0;margin:10px 0;font-size:11.5px}
+.db{background:rgba(255,82,82,.06);border-left:3px solid var(--err);padding:10px 14px;border-radius:0 var(--rx) var(--rx) 0;margin:10px 0;font-size:11.5px}
+.sb{background:rgba(0,230,118,.06);border-left:3px solid var(--ok);padding:10px 14px;border-radius:0 var(--rx) var(--rx) 0;margin:10px 0;font-size:11.5px}
+.cb{background:#0c1017;border:1px solid #1e2535;border-radius:var(--rs);padding:10px 14px;font-family:var(--fm);font-size:11px;color:#c9d1d9;margin:6px 0;overflow-x:auto;white-space:pre}
+.tp{display:inline-block;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;margin:2px}
+.mt{background:rgba(255,176,0,.12);color:var(--warn)}.kc{background:rgba(124,77,255,.12);color:#b388ff}
+.lb{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin:14px 0}
+.lb-h{background:rgba(79,124,255,.08);padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--b1);font-size:12px;font-weight:600}
+.lb-s{padding:14px}
+.ls{display:flex;gap:10px;margin-bottom:10px;font-size:11.5px}
+.ls-n{width:22px;height:22px;background:var(--a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.ls.done .ls-n{background:var(--ok)}
+.cb2{background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs);padding:14px}
+.cb2 select,.cb2 input{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rx);padding:7px 10px;color:var(--t1);font-size:11px;outline:none;margin:3px}
+.cb2 select:focus,.cb2 input:focus{border-color:var(--a)}
+.cb2-p{background:#0c1017;padding:10px;border-radius:var(--rx);font-family:var(--fm);font-size:12px;color:var(--ok);margin-top:10px;min-height:36px}
+.gn{cursor:pointer}.gn:hover rect{stroke:var(--a);stroke-width:2}
+.gn:hover text{fill:var(--al)}
+.topic-c{cursor:pointer}
+.topic-c .tn{width:26px;height:26px;background:var(--ga);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.topic-c .tt{font-size:13px;font-weight:600;margin-bottom:3px}.topic-c .td2{font-size:11px;color:var(--t2)}
+.topic-c .tm{display:flex;gap:10px;margin-top:8px;font-size:9px;color:var(--t3)}
+@media(max-width:860px){
+  #sidebar{position:fixed;left:-280px;top:0;bottom:0;z-index:200;transition:left .3s}
+  #sidebar.open{left:0}:root{--sbw:0}
+  .g2{grid-template-columns:1fr}#ait{width:calc(100% - 40px);right:20px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<aside id="sidebar">
+  <div id="sb-head"><div class="logo">SX</div><div class="brand">ShadowXLab<small>Recon Platform</small></div></div>
+  <nav id="sb-nav"></nav>
+</aside>
+<div id="main">
+  <header id="hdr">
+    <button class="hb" id="menubtn" style="display:none" data-act="menu">☰</button>
+    <div id="bc"><span>ShadowXLab</span><span class="bc-s">›</span><span>Module 02</span><span class="bc-s">›</span><span class="bc-c" id="bcc">Enterprise Overview</span></div>
+    <div id="hdr-r">
+      <div class="xp" id="xpd">⚡ <span id="xpv">0</span> XP</div>
+      <button class="hb" data-act="dashboard">📊 Progress</button>
+      <button class="hb" data-act="aitoggle">🤖 AI Tutor</button>
+    </div>
+  </header>
+  <main id="cnt"></main>
+</div>
+</div>
+
+<button id="aitog" data-act="aitoggle">🤖</button>
+<div id="ait">
+  <div id="ait-h"><div class="av">🤖</div><div class="inf"><h4>ShadowX AI Tutor</h4><small>Recon Specialist</small></div><button class="md-c" data-act="aitoggle" style="margin-left:auto">✕</button></div>
+  <div class="ai-lbs" id="ailbs">
+    <button class="ai-lb" data-lvl="child">🧒 ELI10</button>
+    <button class="ai-lb" data-lvl="teen">🧑 ELI15</button>
+    <button class="ai-lb" data-lvl="grad">🎓 Graduate</button>
+    <button class="ai-lb" data-lvl="soc">🛡️ SOC</button>
+    <button class="ai-lb" data-lvl="ceh">📝 CEH</button>
+    <button class="ai-lb" data-lvl="interview">💼 Interview</button>
+  </div>
+  <div id="ait-body"><div class="am a">👋 Hi! I'm your AI Recon Tutor. Click a level above or ask me anything about reconnaissance!</div></div>
+  <div id="ait-in"><input type="text" id="aiinp" placeholder="Ask about recon..."><button class="btn btn-p btn-s" data-act="aisend">Send</button></div>
+</div>
+
+<div class="mo" id="modal">
+  <div class="md"><div class="md-h"><h3 id="mt">Detail</h3><button class="md-c" data-act="closemodal">✕</button></div><div class="md-b" id="mb"></div></div>
+</div>
+<div id="tc2"></div>
+
+<script>
+/* ===================== STATE ===================== */
+const S={xp:0,badges:[],done:[],labs:[],quiz:{},sec:'overview',fcIdx:0,aiLvl:'grad'};
+const LVLS=[{n:'Intern',xp:0,i:'🔰'},{n:'Junior Analyst',xp:200,i:'🔍'},{n:'SOC Analyst',xp:500,i:'🛡️'},{n:'Security Engineer',xp:1000,i:'⚙️'},{n:'Senior Pentester',xp:2000,i:'🎯'},{n:'Lead Consultant',xp:4000,i:'👑'}];
+function addXP(n){S.xp+=n;document.getElementById('xpv').textContent=S.xp;save()}
+function save(){try{localStorage.setItem('sxl',JSON.stringify(S))}catch(e){}}
+function load(){try{const x=localStorage.getItem('sxl');if(x){Object.assign(S,JSON.parse(x));document.getElementById('xpv').textContent=S.xp}}catch(e){}}
+function toast(m,t='ok'){const c=document.getElementById('tc2'),d=document.createElement('div');d.className='tst tst-'+t;d.textContent=m;c.appendChild(d);setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .3s';setTimeout(()=>d.remove(),300)},2800)}
+function openModal(t,b){document.getElementById('mt').textContent=t;document.getElementById('mb').innerHTML=b;document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+
+/* ===================== NAV DATA ===================== */
+const NAV=[
+  {g:'🏢 GFS Enterprise',items:[{id:'overview',icon:'🌍',label:'Enterprise Overview'},{id:'company',icon:'🏛️',label:'Company Profile'}]},
+  {g:'🔍 Reconnaissance',items:[{id:'fundamentals',icon:'📖',label:'Recon Fundamentals'},{id:'passive',icon:'🕵️',label:'Passive Recon',b:'12'},{id:'active',icon:'⚡',label:'Active Recon',b:'8'},{id:'osint',icon:'🌐',label:'OSINT'},{id:'dns',icon:'🔗',label:'DNS Intelligence'},{id:'gdork',icon:'🔎',label:'Google Dorking'},{id:'email',icon:'📧',label:'Email & People'},{id:'techfp',icon:'🖥️',label:'Tech Fingerprinting'},{id:'certt',icon:'🔐',label:'Cert Transparency'}]},
+  {g:'🛠️ Tools',items:[{id:'tools',icon:'🧰',label:'Tool Explorer',b:'30+'},{id:'playground',icon:'💻',label:'Command Playground'}]},
+  {g:'🎓 Learning',items:[{id:'labs',icon:'🔬',label:'Enterprise Labs'},{id:'assess',icon:'📝',label:'Assessments'},{id:'dashboard',icon:'📊',label:'My Dashboard'}]},
+  {g:'🤖 AI',items:[{id:'airecon',icon:'🧠',label:'AI Recon Assistant'},{id:'twin',icon:'🏗️',label:'Digital Twin'}]},
+  {g:'🛡️ Defense',items:[{id:'soc',icon:'🎯',label:'SOC Detection'},{id:'report',icon:'📋',label:'Final Report'}]}
+];
+const SEC_T={overview:'Enterprise Overview',company:'Company Profile',fundamentals:'Recon Fundamentals',passive:'Passive Reconnaissance',active:'Active Reconnaissance',osint:'OSINT',dns:'DNS Intelligence',gdork:'Google Dorking',email:'Email & People',techfp:'Tech Fingerprinting',certt:'Certificate Transparency',tools:'Tool Explorer',playground:'Command Playground',labs:'Enterprise Labs',assess:'Assessments',dashboard:'My Dashboard',airecon:'AI Recon Assistant',twin:'Digital Twin',soc:'SOC Detection',report:'Final Report'};
+
+/* ===================== BUILD NAV ===================== */
+function buildNav(){
+  const nav=document.getElementById('sb-nav');
+  nav.innerHTML=NAV.map(g=>`<div class="ng"><div class="ng-t">${g.g}</div>${g.items.map(it=>`<div class="ni${S.sec===it.id?' on':''}" data-nav="${it.id}"><span class="ni-i">${it.icon}</span><span class="ni-l">${it.label}</span>${it.b?`<span class="ni-b">${it.b}</span>`:''}</div>`).join('')}</div>`).join('');
+}
+
+/* ===================== SHOW SECTION ===================== */
+function showSec(id){
+  S.sec=id;
+  document.getElementById('bcc').textContent=SEC_T[id]||id;
+  document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on',n.dataset.nav===id));
+  document.getElementById('cnt').innerHTML=renderSec(id);
+  document.getElementById('cnt').scrollTop=0;
+  addXP(2);save();
+  initSec(id);
+}
+
+function renderSec(id){
+  const R={overview:rOverview,company:rCompany,fundamentals:rFundamentals,passive:rPassive,active:rActive,osint:rOSINT,dns:rDNS,gdork:rGDork,email:rEmail,techfp:rTechFP,certt:rCertT,tools:rTools,playground:rPlayground,labs:rLabs,assess:rAssess,dashboard:rDashboard,airecon:rAIRecon,twin:rTwin,soc:rSOC,report:rReport};
+  return (R[id]||rDefault)();
+}
+
+function rDefault(){return `<div class="hero"><h1>🚧 Coming Soon</h1><p>This section is under development.</p></div>`}
+
+/* ===================== DATA ===================== */
+const GFS={name:'Global Financial Services (GFS)',domain:'gfs-financial.com',founded:1998,hq:'New York, NY',emp:12500,rev:'$4.2B',ind:'Banking & Financial Services',subs:['GFS Insurance Corp','GFS Investment Partners','GFS Digital Banking'],doms:['gfs-financial.com','gfs-insurance.com','gfs-invest.com','gfsdigital.com'],tech:['Nginx 1.18','WordPress 6.4','React','Java Spring Boot','PostgreSQL','Redis','Kubernetes'],
+staff:[
+  {n:'Sarah Chen',r:'CISO',d:'Security',e:'s.chen@gfs-financial.com'},
+  {n:'Mike Torres',r:'SOC Manager',d:'Security',e:'m.torres@gfs-financial.com'},
+  {n:'Priya Patel',r:'Cloud Architect',d:'Infrastructure',e:'p.patel@gfs-financial.com'},
+  {n:'James Wilson',r:'DBA',d:'Data',e:'j.wilson@gfs-financial.com'},
+  {n:'Aisha Johnson',r:'DevOps Lead',d:'Engineering',e:'a.johnson@gfs-financial.com'}
+],
+subs2:[
+  {s:'www',ip:'203.0.113.10',t:'Nginx',p:'Main website'},
+  {s:'mail',ip:'203.0.113.20',t:'Exchange',p:'Email server'},
+  {s:'vpn',ip:'203.0.113.30',t:'OpenVPN',p:'VPN gateway'},
+  {s:'api',ip:'203.0.113.40',t:'Spring Boot',p:'REST API'},
+  {s:'dev',ip:'203.0.113.45',t:'Nginx',p:'Development'},
+  {s:'staging',ip:'203.0.113.46',t:'Nginx',p:'Staging'},
+  {s:'portal',ip:'203.0.113.50',t:'React',p:'Customer portal'},
+  {s:'admin',ip:'203.0.113.55',t:'Apache',p:'Admin panel'},
+  {s:'cdn',ip:'203.0.113.60',t:'Cloudflare',p:'CDN'},
+  {s:'blog',ip:'203.0.113.65',t:'WordPress',p:'Blog'}
+]};
+
+const QUIZZES=[
+  {q:'What is the primary goal of reconnaissance?',o:['Exploit vulnerabilities','Gather information about target','Install backdoors','Denial of service'],a:1,e:'Reconnaissance is the information-gathering phase before any exploitation.'},
+  {q:'Which recon type sends NO packets to the target?',o:['Active','Passive','Port Scanning','Banner Grabbing'],a:1,e:'Passive recon uses only publicly available data.'},
+  {q:'What DNS record maps domain to IPv4?',o:['AAAA','MX','A','CNAME'],a:2,e:'A records map to IPv4; AAAA to IPv6.'},
+  {q:'Which tool provides visual link analysis?',o:['Nmap','Maltego','Gobuster','ffuf'],a:1,e:'Maltego offers graph-based OSINT visualization.'},
+  {q:'What port does DNS use for queries?',o:['TCP 53','UDP 53','TCP 443','UDP 80'],a:1,e:'DNS uses UDP/53 for queries, TCP/53 for zone transfers.'},
+  {q:'What is a zone transfer (AXFR)?',o:['Moving servers','Copying entire DNS zone','Deleting records','Encrypting DNS'],a:1,e:'AXFR replicates the full DNS zone between servers.'},
+  {q:'Which search engine indexes devices?',o:['Google','Bing','Shodan','DuckDuckGo'],a:2,e:'Shodan scans the internet and indexes connected devices.'},
+  {q:'OSINT stands for?',o:['Open System Intel','Open Source Intel','Operating System Intel','Open Security Intel'],a:1,e:'OSINT = Open Source Intelligence from public sources.'},
+  {q:'Google dork for PDF files on a domain?',o:['site:x intitle:pdf','site:x filetype:pdf','site:x ext:pdf','site:x inurl:pdf'],a:1,e:'filetype: is the correct operator.'},
+  {q:'MITRE ATT&CK tactic for recon?',o:['TA0001','TA0043','TA0002','TA0007'],a:1,e:'TA0043 is the dedicated Reconnaissance tactic.'}
+];
+
+const FCS=[
+  {f:'What is DNS?',b:'Domain Name System — translates domain names to IP addresses. The internet\'s address book.'},
+  {f:'Passive vs Active Recon?',b:'Passive: no packets sent (OSINT). Active: direct interaction (scanning). Passive is stealthy; Active is thorough but detectable.'},
+  {f:'What is WHOIS?',b:'Query protocol (RFC 3912) returning domain registration info: registrant, dates, name servers. Uses TCP/43.'},
+  {f:'What is ASN?',b:'Autonomous System Number — unique ID for a network under single control. Reveals IP ranges owned by an org.'},
+  {f:'What is CIDR?',b:'Classless Inter-Domain Routing notation like 203.0.113.0/24 defining IP ranges. /24 = 256 IPs.'},
+  {f:'A vs AAAA records?',b:'A = domain to IPv4 (32-bit). AAAA = domain to IPv6 (128-bit). Both are address records.'},
+  {f:'What is Google Dorking?',b:'Using advanced search operators (site:, filetype:, intitle:) to find exposed info indexed by search engines.'},
+  {f:'What is Certificate Transparency?',b:'Framework where all SSL/TLS certs are publicly logged. Reveals subdomains through cert records.'},
+  {f:'What is Shodan?',b:'Search engine for internet-connected devices. Scans entire IPv4 space, indexes service banners and ports.'},
+  {f:'What is attack surface?',b:'Sum of all points where an attacker could enter or extract data. Larger surface = more risk.'}
+];
+
+/* ===================== AI ===================== */
+const AI_R={
+  'recon':{child:"Imagine playing hide and seek — before seeking, you look around to learn the house. Recon is that looking-around phase! 🏠",teen:"Recon is the detective phase of hacking — gathering clues about a target without touching it directly. Like studying a building's blueprints before a fire drill.",grad:"Reconnaissance is systematic collection and analysis of info about a target's IT infrastructure. Maps to MITRE ATT&CK TA0043. Encompasses passive (no interaction) and active (probing) techniques.",soc:"SOC detects recon via: unusual DNS queries, WAF alerts for enumeration, IDS signatures matching scanners, anomalous WHOIS lookups, spikes in 404 errors.",ceh:"CEH Phase 1. Key: Passive=OSINT, no packets. Active=direct probing. Tools: theHarvester, Maltego, Recon-ng, Shodan. Footprinting vs Fingerprinting.",interview:"I approach recon in two tracks — passive (OSINT: WHOIS, DNS, CT logs, social media) and active (Nmap, Amass, httpx). Always document and map to MITRE ATT&CK."},
+  'dns':{child:"DNS is a phone book for the internet! Type 'google.com' and DNS finds the number (IP address) computers use. Without it, you'd memorize numbers! 📖",teen:"DNS converts human names to IP addresses. Your computer asks a resolver → root servers → TLD servers → authoritative servers → gets the IP. Takes milliseconds!",grad:"DNS (RFC 1035, 1983) is a hierarchical naming system. Root → TLD → SLD → subdomain. Uses UDP/53 queries, TCP/53 zone transfers. Records: A, AAAA, MX, NS, TXT, CNAME, SOA, PTR.",soc:"Monitor for DNS tunneling (long TXT queries), fast-flux (rapid IP changes), DGA patterns, unauthorized AXFR. Log sources: DNS query logs, Zeek/Bro.",ceh:"DNS uses UDP/53, TCP/53. Record types: A, AAAA, MX, NS, TXT, CNAME, SOA, PTR. Tools: dig, nslookup, host, DNSRecon, DNSenum.",interview:"DNS is the most exposed infrastructure. I enumerate to discover subdomains, mail servers, TXT records (SPF/DKIM). Zone transfer testing is step one."},
+  'whois':{child:"WHOIS asks 'Who owns this house?' — it's a directory of who registered each website! 🔍",teen:"WHOIS lookup reveals who registered a domain — name, email, dates, name servers. Like checking property records.",grad:"WHOIS (RFC 3912) queries databases storing registrants of domain names, IPs, ASNs. TCP/43. ICANN requires accuracy; GDPR redacted personal info since 2018. RDAP is the modern successor.",soc:"WHOIS supports IR by identifying domain owners, registration timelines (newly registered = suspicious), infrastructure ownership. Pivot on registrant email for related domains.",ceh:"WHOIS reveals registrant info, dates, name servers. Tools: whois, SmartWHOIS, DomainTools. Reverse WHOIS finds all domains by same registrant.",interview:"WHOIS is my starting point. I extract registrant info, creation dates, name servers. Newly registered domains (<30 days) are higher risk. Reverse WHOIS reveals related infrastructure."},
+  'shodan':{child:"Shodan is like Google but for devices — cameras, servers, fridges, traffic lights! X-ray vision for the internet! 🌐",teen:"Shodan indexes every internet-connected device. Search 'apache in:US' to find all Apache servers in America. Reveals open ports and software versions.",grad:"Shodan (John Matherly, 2009) crawls entire IPv4 space, collecting banners. Filters: port:, country:, org:, product:, version:, vuln:. Queries Shodan's cached data — no packets to target.",soc:"Asset discovery, CVE monitoring, config auditing, C2 detection. Integrate Shodan Monitor for alerting, API with SIEM for enrichment.",ceh:"Shodan searches devices, not websites. Key filters: port, country, org, hostname, product. Common: port:21 (FTP), port:3389 (RDP), port:27017 (MongoDB).",interview:"Before active scanning, I query Shodan to map internet-facing infrastructure. Discover forgotten dev/staging servers, outdated software, exposed databases."},
+  'osint':{child:"OSINT is detective work using only publicly visible clues! Photo with school name in background = OSINT! 🕵️",teen:"OSINT = collecting info from public sources. Not secret, not stolen. Sources: websites, social media, public records, news, satellite imagery.",grad:"OSINT is intelligence from publicly available info (DoD JP 2-0). Sources: media, internet, government data, academic, commercial, grey literature. OSINT Framework categorizes hundreds of tools.",ceh:"OSINT is passive — never touches target. Categories: HUMINT, SIGINT, GEOINT, FININT have OSINT components. Tools: Maltego, SpiderFoot, Recon-ng, theHarvester.",interview:"My OSINT methodology: define requirements → identify sources → collect (automated + manual) → process/validate → analyze for patterns → produce actionable report mapped to MITRE ATT&CK."},
+  'default':{child:"Great question! In cybersecurity, we understand how things work to protect them better. Like a doctor learning anatomy! 🌟",teen:"Every security concept builds on previous knowledge, like building blocks. Let me break this down practically.",grad:"This is a critical component of the reconnaissance phase. Understanding requires knowledge of network protocols, system architecture, and the threat landscape.",soc:"From a SOC perspective, this is relevant to threat detection. We monitor indicators, correlate alerts, and apply MITRE ATT&CK mapping.",ceh:"CEHv13 context: understand the mechanism, know the tools, recognize legal vs illegal applications, map to hacking phases.",interview:"I'd emphasize technical depth and practical application, describing real assessment experience, tools used, documentation approach, and business impact."}
+};
+
+function getAI(msg,lvl){
+  const k=msg.toLowerCase();
+  for(const key in AI_R){if(k.includes(key))return AI_R[key][lvl]||AI_R[key].grad}
+  return AI_R['default'][lvl]||AI_R['default'].grad;
+}
+
+/* ===================== TOOLS DATA ===================== */
+const TOOLS=[
+  {n:'theHarvester',cat:'OSINT',typ:'passive',icon:'🌾',d:'Collects emails, subdomains, hosts from public sources.',hist:'Christian Martorella, now Edge-Security.',pur:'Email harvesting, subdomain enumeration.',inst:'pip install theHarvester',cmds:['theHarvester -d target.com -b google','theHarvester -d target.com -b linkedin -l 200'],out:'[*] Emails found: admin@target.com\n[*] Hosts found: mail.target.com (192.168.1.10)',use:'Automated email/subdomain collection.',blue:'Monitor for bulk enumeration in logs.',rel:['Maltego','Recon-ng','SpiderFoot']},
+  {n:'Maltego',cat:'OSINT',typ:'passive',icon:'🔗',d:'Interactive data mining for link analysis and visualization.',hist:'Paterva 2004, acquired by Cyxtera 2017.',pur:'Visual graph-based relationship analysis.',inst:'Download maltego.com, requires Java.',cmds:['Install transforms from Hub','Right-click → Run Transform','Drag-drop to build graph'],out:'Graph: target.com → mail → admin@ → John Smith → LinkedIn',use:'Complex OSINT relationship mapping.',blue:'Transforms query same public APIs you monitor.',rel:['SpiderFoot','Recon-ng','Shodan']},
+  {n:'Recon-ng',cat:'OSINT',typ:'passive',icon:'🧭',d:'Full-featured modular web reconnaissance framework.',hist:'Tim Tomes (LaNMaSteR53).',pur:'Modular recon with database storage and Metasploit-like interface.',inst:'apt install recon-ng',cmds:['recon-ng','workplace create gfs','modules load recon/domains-hosts/hackertarget','options set SOURCE gfs.com','run'],out:'[*] [host] www.gfs.com (203.0.113.10)\n[*] [host] mail.gfs.com (203.0.113.20)',use:'Systematic recon with reusable modules.',blue:'Monitor for coordinated public API queries.',rel:['theHarvester','SpiderFoot','Amass']},
+  {n:'SpiderFoot',cat:'OSINT',typ:'passive',icon:'🕷️',d:'OSINT automation with 200+ modules.',hist:'Steve Micallef 2012.',pur:'Automated OSINT from 200+ sources with web UI.',inst:'pip install spiderfoot',cmds:['python sf.py -l 127.0.0.1:5001','GUI: Enter target → Select modules → Run'],out:'Modules: 200, Results: 1847\nDomains: 45, IPs: 120, Emails: 89',use:'Comprehensive automated OSINT sweeps.',blue:'Generates identifiable traffic patterns.',rel:['Maltego','Recon-ng','Amass']},
+  {n:'Amass',cat:'DNS',typ:'active',icon:'🗺️',d:'In-depth attack surface mapping and asset discovery.',hist:'Jeff Foley, OWASP project. NSA-sponsored.',pur:'Subdomain enumeration combining passive + active.',inst:'go install github.com/owasp-amass/amass/v4/...@latest',cmds:['amass enum -d gfs.com','amass enum -passive -d gfs.com','amass enum -d gfs.com -brute'],out:'www.gfs.com (203.0.113.10)\nmail.gfs.com (203.0.113.20)\ndev.gfs.com (203.0.113.45)',use:'Gold standard for subdomain enumeration.',blue:'Monitor DNS logs for brute-force patterns.',rel:['Subfinder','DNSRecon','Sublist3r']},
+  {n:'Subfinder',cat:'DNS',typ:'passive',icon:'🔍',d:'Fast passive subdomain discovery from 40+ sources.',hist:'ProjectDiscovery.',pur:'Purely passive subdomain enumeration.',inst:'go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest',cmds:['subfinder -d gfs.com','subfinder -d gfs.com -all'],out:'www.gfs.com\nmail.gfs.com\ndev.gfs.com\napi.gfs.com',use:'Fast initial subdomain sweep.',blue:'Purely passive — no packets to target.',rel:['Amass','DNSRecon','Sublist3r']},
+  {n:'DNSRecon',cat:'DNS',typ:'active',icon:'🌐',d:'DNS enumeration for zone transfers and record analysis.',hist:'Carlos Perez, Kali Linux staple.',pur:'DNS records, zone transfer testing, reverse lookup.',inst:'apt install dnsrecon',cmds:['dnsrecon -d gfs.com','dnsrecon -d gfs.com -t axfr','dnsrecon -d gfs.com -r 203.0.113.0/24'],out:'[*] Zone Transfer successful!\n  NS ns1.gfs.com 203.0.113.2\n  A www.gfs.com 203.0.113.10',use:'DNS-focused enumeration.',blue:'CRITICAL: If AXFR succeeds, DNS is misconfigured!',rel:['DNSenum','dig','host']},
+  {n:'Shodan',cat:'Search',typ:'passive',icon:'🌐',d:'Search engine for internet-connected devices.',hist:'John Matherly 2009, DEF CON 18.',pur:'Discover internet-facing assets without touching target.',inst:'shodan.io | pip install shodan',cmds:['shodan search "hostname:gfs.com"','shodan host 203.0.113.10'],out:'203.0.113.10\n  Ports: 80, 443, 22\n  OS: Ubuntu 20.04\n  Server: nginx/1.18.0',use:'Internet-wide asset discovery.',blue:'Use Shodan Monitor for your own assets.',rel:['Censys','FOFA','ZoomEye']},
+  {n:'Censys',cat:'Search',typ:'passive',icon:'🔭',d:'Internet scanning with certificate-based discovery.',hist:'University of Michigan (ZMap project).',pur:'Certificate-based discovery and structured host analysis.',inst:'censys.io | pip install censys',cmds:['censys search "services.tls...gfs.com"','censys view 203.0.113.10'],out:'IP: 203.0.113.10\nServices: HTTP(443), SSH(22)\nCert: *.gfs.com',use:'Certificate-based asset discovery.',blue:'Monitor Censys scans of your infra.',rel:['Shodan','FOFA','ZoomEye']},
+  {n:'FOFA',cat:'Search',typ:'passive',icon:'🛰️',d:'Chinese internet asset search engine.',hist:'Baimao (白帽), strong Asian coverage.',pur:'Asset discovery with body/headers/icon searching.',inst:'fofa.info',cmds:['fofa: title="GFS" && country="US"','fofa: cert="gfs.com"'],out:'Results: 234 assets\nwww.gfs.com (203.0.113.10)',use:'Supplementary asset discovery.',blue:'Covers different regions than Shodan.',rel:['Shodan','Censys','ZoomEye']},
+  {n:'VirusTotal',cat:'Threat Intel',typ:'passive',icon:'🛡️',d:'Multi-AV scanner and threat intelligence platform.',hist:'Hispasec 2004, Google 2012.',pur:'File/URL/domain scanning with 70+ AV engines.',inst:'virustotal.com | pip install vt-py',cmds:['vt domain info gfs.com','vt ip info 203.0.113.10'],out:'Domain: gfs.com\nDetection: 0/90\nSubdomains: 45',use:'Malware analysis, domain reputation.',blue:'Monitor for uploads of proprietary files.',rel:['Hybrid Analysis','Any.Run']},
+  {n:'SecurityTrails',cat:'DNS',typ:'passive',icon:'📜',d:'Historical DNS data and subdomain platform.',hist:'Founded 2017.',pur:'Historical DNS intelligence and subdomain discovery.',inst:'securitytrails.com | API',cmds:['API: /v1/domain/gfs.com/subdomains','API: /v1/history/gfs.com/dns/a'],out:'Subdomains: 127\nHistorical IPs: 15 over 5 years',use:'Historical DNS analysis.',blue:'Your domain history is being catalogued.',rel:['Shodan','Censys','DNSdumpster']},
+  {n:'BuiltWith',cat:'Fingerprinting',typ:'passive',icon:'🔧',d:'Website technology profiler.',hist:'Gary Brewer 2007, 600M+ sites.',pur:'Technology stack identification.',inst:'builtwith.com',cmds:['builtwith.com/gfs.com'],out:'CMS: WordPress 6.4\nServer: Nginx 1.18\nCDN: Cloudflare',use:'Tech stack profiling for vuln mapping.',blue:'Audit public-facing tech stacks.',rel:['Wappalyzer','WhatWeb','Netcraft']},
+  {n:'Wappalyzer',cat:'Fingerprinting',typ:'passive',icon:'🔬',d:'Browser extension for real-time tech identification.',hist:'Elbert Alias 2008, FullStory 2021.',pur:'Identify CMS, frameworks, analytics from browser.',inst:'Chrome/Firefox extension',cmds:['Visit site → Click icon'],out:'CMS: WordPress 6.4\nServer: Nginx\nAnalytics: GA4',use:'Quick tech identification.',blue:'Clean up technology fingerprints.',rel:['BuiltWith','WhatWeb','Netcraft']},
+  {n:'Netcraft',cat:'Fingerprinting',typ:'passive',icon:'📊',d:'Internet security: site reports, phishing detection.',hist:'Mike Prettejohn 1995.',pur:'Site tech reports, hosting, SSL analysis.',inst:'netcraft.com',cmds:['netcraft.com/site-report/gfs.com'],out:'Server: Nginx 1.18\nHosting: AWS\nSSL: A+',use:'Hosting and SSL assessment.',blue:'SSL/TLS auditing and phishing detection.',rel:['BuiltWith','Wappalyzer','SSL Labs']},
+  {n:'Wayback Machine',cat:'OSINT',typ:'passive',icon:'⏰',d:'Historical web page snapshots.',hist:'Brewster Kahle 1996, 700B+ pages.',pur:'View historical website versions.',inst:'web.archive.org',cmds:['web.archive.org/web/*/gfs.com','waybackurls gfs.com'],out:'Snapshots: 2024 (23), 2023 (45)\nOld admin panel: /admin/ (2019)',use:'Finding old pages and removed content.',blue:'Audit what historical snapshots reveal.',rel:['CommonCrawl','Google Cache']},
+  {n:'Google Dorking',cat:'OSINT',typ:'passive',icon:'🔎',d:'Advanced Google operators for finding exposed data.',hist:'Johnny Long 2004, GHDB.',pur:'Discover files, login pages, errors via search.',inst:'No install — use Google',cmds:['site:gfs.com filetype:pdf','site:gfs.com intitle:"index of"','site:gfs.com inurl:admin'],out:'Results: 47 pages\n/admin/login.php\n/backup/db_backup.sql',use:'Finding exposed sensitive files.',blue:'Implement robots.txt, conduct dork audits.',rel:['Shodan','OSINT Framework']},
+  {n:'curl',cat:'Network',typ:'active',icon:'📡',d:'Command-line URL data transfer tool.',hist:'Daniel Stenberg 1998.',pur:'HTTP requests, header inspection, API testing.',inst:'Pre-installed most systems',cmds:['curl -I https://gfs.com','curl -L -s -o /dev/null -w "%{http_code}" https://gfs.com'],out:'HTTP/2 200\nserver: nginx/1.18.0\nx-powered-by: Express',use:'Manual HTTP header analysis.',blue:'Monitor for unusual User-Agent strings.',rel:['wget','httpie','Postman']},
+  {n:'Nmap',cat:'Network',typ:'active',icon:'🗺️',d:'Network exploration and security auditing — the gold standard.',hist:'Gordon Lyon (Fyodor) 1997.',pur:'Host discovery, port scanning, service detection.',inst:'nmap.org',cmds:['nmap -sn 203.0.113.0/24','nmap -sV -sC -T4 target.com'],out:'22/tcp open ssh OpenSSH 8.9\n80/tcp open http nginx 1.18\n443/tcp open https nginx 1.18',use:'Port scanning and service enumeration.',blue:'IDS/IPS should detect SYN scans.',rel:['Masscan','Zmap','RustScan']},
+  {n:'dig',cat:'DNS',typ:'active',icon:'⛏️',d:'DNS lookup utility — the definitive DNS tool.',hist:'BIND by ISC.',pur:'DNS record queries and troubleshooting.',inst:'Pre-installed Linux/macOS',cmds:['dig gfs.com','dig gfs.com MX','dig gfs.com ANY +noall +answer'],out:'gfs.com. 300 IN A 203.0.113.10\ngfs.com. 300 IN MX 10 mail.gfs.com.',use:'Primary DNS query tool.',blue:'Rate limit and log AXFR attempts.',rel:['nslookup','host','DNSRecon']},
+  {n:'whois',cat:'OSINT',typ:'passive',icon:'📋',d:'Domain registration and IP ownership lookup.',hist:'ARPANET era, RFC 3912.',pur:'Domain ownership and registrant discovery.',inst:'Pre-installed',cmds:['whois gfs.com','whois 203.0.113.10'],out:'Domain: GFS.COM\nRegistrar: MarkMonitor\nCreated: 1998-03-15',use:'Domain ownership verification.',blue:'Ensure WHOIS data is accurate.',rel:['SmartWHOIS','DomainTools']},
+  {n:'httpx',cat:'Web',typ:'active',icon:'🌐',d:'Fast HTTP toolkit for probing web servers.',hist:'ProjectDiscovery.',pur:'HTTP probing, tech detection, title extraction.',inst:'go install github.com/projectdiscovery/httpx/cmd/httpx@latest',cmds:['cat subs.txt | httpx','httpx -l subs.txt -title -tech-detect'],out:'https://www.gfs.com [200] [nginx]\nhttps://mail.gfs.com [302] [nginx]',use:'Verifying alive subdomains.',blue:'Indistinguishable from normal HTTP.',rel:['whatweb','Wappalyzer','curl']},
+  {n:'Sublist3r',cat:'DNS',typ:'passive',icon:'📝',d:'Subdomain enumeration using search engines.',hist:'Ahmed Aboul-Ela.',pur:'Fast passive subdomain discovery.',inst:'git clone + pip install -r requirements.txt',cmds:['sublist3r -d gfs.com','sublist3r -d gfs.com -o subs.txt'],out:'Total: 67 subdomains\nwww, mail, api, dev, staging',use:'Quick passive subdomain sweep.',blue:'Queries search engines — monitor scraping.',rel:['Amass','Subfinder','DNSRecon']},
+  {n:'WhatWeb',cat:'Fingerprinting',typ:'active',icon:'🔍',d:'Web tech identifier with 1800+ plugins.',hist:'Andrew Horton (urbanadventurer).',pur:'Identify CMS, frameworks, JS libraries.',inst:'apt install whatweb',cmds:['whatweb gfs.com','whatweb -a 3 gfs.com'],out:'[200 OK] nginx[1.18] WordPress[6.4] jQuery[3.7]',use:'Comprehensive web fingerprinting.',blue:'Remove unnecessary tech signatures.',rel:['Wappalyzer','BuiltWith','httpx']},
+  {n:'Gobuster',cat:'Web',typ:'active',icon:'🚀',d:'Directory and DNS brute-forcing in Go.',hist:'OJ Reeves.',pur:'Hidden directory and vhost discovery.',inst:'go install github.com/OJ/gobuster/v3@latest',cmds:['gobuster dir -u https://gfs.com -w wordlist.txt','gobuster dns -d gfs.com -w subs.txt'],out:'/admin (301)\n/api (200)\n/backup (403)\n/login (200)',use:'Discovering hidden directories.',blue:'Detect via high 404/403 rates.',rel:['dirb','dirsearch','ffuf']},
+  {n:'ffuf',cat:'Web',typ:'active',icon:'⚡',d:'Fast web fuzzer for URLs, headers, POST data.',hist:'Joona Hoikkala.',pur:'High-speed fuzzing.',inst:'go install github.com/ffuf/ffuf/v2@latest',cmds:['ffuf -u https://gfs.com/FUZZ -w wordlist.txt','ffuf -u https://FUZZ.gfs.com -w subs.txt -mc 200'],out:'admin [301]\napi [200]\nbackup [403]',use:'High-speed directory fuzzing.',blue:'Detect through request volume.',rel:['Gobuster','dirsearch','wfuzz']},
+  {n:'nslookup',cat:'DNS',typ:'active',icon:'💻',d:'DNS lookup on Windows and Linux.',hist:'Oldest DNS tool, from BIND.',pur:'Quick DNS lookups.',inst:'Pre-installed',cmds:['nslookup gfs.com','nslookup -type=MX gfs.com','nslookup gfs.com 8.8.8.8'],out:'Server: 8.8.8.8\nName: gfs.com\nAddress: 203.0.113.10',use:'Quick cross-platform DNS lookups.',blue:'Log DNS queries at resolver level.',rel:['dig','host','DNSRecon']},
+  {n:'host',cat:'DNS',typ:'active',icon:'🖥️',d:'Simple DNS lookup with clean output.',hist:'BIND utilities.',pur:'Quick DNS verification.',inst:'Pre-installed Linux/macOS',cmds:['host gfs.com','host -t MX gfs.com','host 203.0.113.10'],out:'gfs.com has address 203.0.113.10\ngfs.com mail handled by 10 mail.gfs.com',use:'Quick DNS checks.',blue:'Standard tool.',rel:['dig','nslookup','DNSRecon']},
+  {n:'wget',cat:'Network',typ:'active',icon:'📥',d:'Non-interactive network downloader.',hist:'Hrvoje Nikšić 1996.',pur:'File downloading and site mirroring.',inst:'Pre-installed Linux',cmds:['wget https://gfs.com','wget -r -l 2 https://gfs.com'],out:'Connecting... 200 OK\nLength: 45231 (44K)',use:'Recursive site mirroring.',blue:'Monitor for aggressive crawling.',rel:['curl','httrack']},
+  {n:'ping',cat:'Network',typ:'active',icon:'📡',d:'ICMP echo for host discovery.',hist:'Mike Muuss 1983.',pur:'Host alive checking and latency.',inst:'Pre-installed',cmds:['ping gfs.com','ping -c 4 gfs.com'],out:'64 bytes: icmp_seq=0 ttl=56 time=12.3 ms',use:'Basic reachability testing.',blue:'ICMP often blocked at perimeter.',rel:['traceroute','fping','hping3']},
+  {n:'traceroute',cat:'Network',typ:'active',icon:'🗺️',d:'Shows packet path to destination.',hist:'Van Jacobson 1987.',pur:'Network path discovery.',inst:'Pre-installed',cmds:['traceroute gfs.com','tracert gfs.com'],out:'1 192.168.1.1 1.2ms\n2 10.0.0.1 5.6ms\n3 203.0.113.1 12.3ms',use:'Network path analysis.',blue:'Block ICMP TTL exceeded.',rel:['ping','mtr','pathping']}
+];
+
+/* ===================== TERM OUTPUTS ===================== */
+const TOUT={
+'whois gfs-financial.com':'Domain Name: GFS-FINANCIAL.COM\nRegistry Domain ID: 2847563_DOMAIN_COM-VRSN\nRegistrar: MarkMonitor Inc.\nCreation Date: 1998-03-15T05:00:00Z\nExpiry Date: 2026-03-16T04:00:00Z\nRegistrant Organization: Global Financial Services, Inc.\nRegistrant Country: US\nName Server: NS1.GFS-FINANCIAL.COM\nName Server: NS2.GFS-FINANCIAL.COM\nDNSSEC: unsigned',
+'dig gfs-financial.com ANY':';; ANSWER SECTION:\ngfs-financial.com.  300  IN  A      203.0.113.10\ngfs-financial.com.  300  IN  MX     10 mail.gfs-financial.com.\ngfs-financial.com.  300  IN  NS     ns1.gfs-financial.com.\ngfs-financial.com.  300  IN  NS     ns2.gfs-financial.com.\ngfs-financial.com.  300  IN  TXT    "v=spf1 include:_spf.google.com ~all"\ngfs-financial.com.  300  IN  SOA    ns1.gfs-financial.com. admin.gfs-financial.com.',
+'dig gfs-financial.com MX':';; ANSWER SECTION:\ngfs-financial.com.  300  IN  MX  10 mail.gfs-financial.com.\ngfs-financial.com.  300  IN  MX  20 mail2.gfs-financial.com.\n\n;; ADDITIONAL:\nmail.gfs-financial.com.  300  IN  A  203.0.113.20',
+'nslookup gfs-financial.com':'Server:    8.8.8.8\nAddress:   8.8.8.8#53\n\nNon-authoritative answer:\nName:  gfs-financial.com\nAddress: 203.0.113.10',
+'host gfs-financial.com':'gfs-financial.com has address 203.0.113.10\ngfs-financial.com mail is handled by 10 mail.gfs-financial.com.\ngfs-financial.com name server ns1.gfs-financial.com.',
+'nmap -sV 203.0.113.10':'Starting Nmap 7.94\nNmap scan report for gfs-financial.com (203.0.113.10)\nHost is up (0.012s latency).\n\nPORT    STATE SERVICE  VERSION\n22/tcp  open  ssh      OpenSSH 8.9p1\n80/tcp  open  http     nginx 1.18.0\n443/tcp open  https    nginx 1.18.0\n3306/tcp open mysql    MySQL 8.0.32\n\nNmap done: 1 IP address scanned in 12.34 seconds',
+'curl -I https://gfs-financial.com':'HTTP/2 200\nserver: nginx/1.18.0\ndate: Mon, 14 Jul 2026 09:07:00 GMT\ncontent-type: text/html; charset=UTF-8\nx-powered-by: Express\nx-frame-options: SAMEORIGIN\nstrict-transport-security: max-age=31536000',
+'theHarvester -d gfs-financial.com -b all':'[*] Target: gfs-financial.com\n\n[*] Emails found:\n  s.chen@gfs-financial.com\n  m.torres@gfs-financial.com\n  p.patel@gfs-financial.com\n  j.wilson@gfs-financial.com\n  a.johnson@gfs-financial.com\n  hr@gfs-financial.com\n  info@gfs-financial.com\n  support@gfs-financial.com\n\n[*] Pattern: firstname.lastname@gfs-financial.com\n\n[*] Hosts found:\n  www.gfs-financial.com  203.0.113.10\n  mail.gfs-financial.com 203.0.113.20\n  vpn.gfs-financial.com  203.0.113.30\n  api.gfs-financial.com  203.0.113.40',
+'amass enum -passive -d gfs-financial.com':'OWASP Amass v4.2.0 - Passive Enumeration\nwww.gfs-financial.com        203.0.113.10\nmail.gfs-financial.com       203.0.113.20\nvpn.gfs-financial.com        203.0.113.30\napi.gfs-financial.com        203.0.113.40\ndev.gfs-financial.com        203.0.113.45\nstaging.gfs-financial.com    203.0.113.46\nportal.gfs-financial.com     203.0.113.50\nadmin.gfs-financial.com      203.0.113.55\ncdn.gfs-financial.com        203.0.113.60\nblog.gfs-financial.com       203.0.113.65\npayments.gfs-financial.com   203.0.113.75\ndb.gfs-financial.com         203.0.113.70\n\nFound 12 subdomains in 23.4s',
+'subfinder -d gfs-financial.com':'               __    _____           __\n  ____  __  __/ /_  / __(_)___  ____/ /_\n / __ \\/ / / / __ \\/ /_/ / __ \\/ __  / _ \\\n/ /_/ / /_/ / /_/ / __/ / / / / /_/ /  __/\n\\____/\\__,_/_.___/_/ /_/_/ /_/\\__,_/\\___/\n\n[INF] Enumerating subdomains for gfs-financial.com\nwww.gfs-financial.com\nmail.gfs-financial.com\nvpn.gfs-financial.com\napi.gfs-financial.com\ndev.gfs-financial.com\nstaging.gfs-financial.com\nportal.gfs-financial.com\nadmin.gfs-financial.com\ncdn.gfs-financial.com\nblog.gfs-financial.com\n[INF] Found 10 subdomains in 3.2s',
+'dnsrecon -d gfs-financial.com':'[*] Performing General Enumeration of: gfs-financial.com\n[*] DNS Server ns1.gfs-financial.com\n[*]     A       gfs-financial.com    203.0.113.10\n[*]     MX      gfs-financial.com    10 mail.gfs-financial.com\n[*]     NS      gfs-financial.com    ns1.gfs-financial.com\n[*]     TXT     gfs-financial.com    "v=spf1 include:_spf.google.com ~all"\n\n[*] Testing Zone Transfer on ns2.gfs-financial.com\n[!] Zone Transfer successful!\n[*]     A       www.gfs-financial.com    203.0.113.10\n[*]     A       mail.gfs-financial.com   203.0.113.20\n[*]     A       db.gfs-financial.com     203.0.113.70',
+'shodan search hostname:gfs-financial.com':'Results for hostname:gfs-financial.com\n\n203.0.113.10\n  Org: Global Financial Services\n  OS: Ubuntu\n  Ports: 80, 443\n  Server: nginx/1.18.0\n\n203.0.113.20\n  Org: Global Financial Services\n  Ports: 443, 587, 993\n  Product: Microsoft Exchange\n\n203.0.113.40\n  Org: Global Financial Services\n  Ports: 443, 8080\n  Product: Spring Boot\n  Tags: actuator, api\n\nTotal: 8 hosts'
+};
+
+/* ===================== SECTION RENDERERS ===================== */
+function rOverview(){
+  return `<div class="hero"><h1>🌍 GFS Enterprise Reconnaissance Experience</h1><p>Welcome to Global Financial Services — your authorized training environment. You're a Junior Security Analyst. Today's mission: comprehensive reconnaissance against GFS infrastructure.</p><div style="margin-top:12px"><span class="tp mt">MITRE ATT&CK TA0043</span><span class="tp kc">Cyber Kill Chain: Recon</span></div></div>
+  <div class="g4"><div class="st"><div class="st-v">12,500</div><div class="st-l">Employees</div></div><div class="st"><div class="st-v">4</div><div class="st-l">Domains</div></div><div class="st"><div class="st-v">10+</div><div class="st-l">Subdomains</div></div><div class="st"><div class="st-v">30+</div><div class="st-l">Recon Tools</div></div><div class="st"><div class="st-v">15+</div><div class="st-l">Labs</div></div><div class="st"><div class="st-v">10</div><div class="st-l">Quizzes</div></div><div class="st"><div class="st-v">10</div><div class="st-l">Flashcards</div></div><div class="st"><div class="st-v">3</div><div class="st-l">Cloud Providers</div></div></div>
+  <h2 style="margin:20px 0 14px">📂 Module Structure</h2>
+  <div class="g2">${[
+    {i:'🌍',t:'GFS Enterprise Overview',d:'Company profile, internet presence, attack surface',x:50,s:'overview'},
+    {i:'📖',t:'Recon Fundamentals',d:'What is recon, ethical hacking, methodology, kill chain',x:50,s:'fundamentals'},
+    {i:'🕵️',t:'Passive Reconnaissance',d:'OSINT, WHOIS, search engines, metadata',x:100,s:'passive'},
+    {i:'⚡',t:'Active Reconnaissance',d:'Port scanning, banner grabbing, service enum',x:100,s:'active'},
+    {i:'🌐',t:'OSINT Deep Dive',d:'Social media, GitHub, public records',x:75,s:'osint'},
+    {i:'🔗',t:'DNS Intelligence',d:'Records, zone transfers, subdomain enum',x:100,s:'dns'},
+    {i:'🔎',t:'Google Dorking',d:'Advanced operators, GHDB, exposed data',x:50,s:'gdork'},
+    {i:'📧',t:'Email & People Intel',d:'Email enum, employee profiling, social eng',x:75,s:'email'},
+    {i:'🖥️',t:'Tech Fingerprinting',d:'CMS, frameworks, web servers, tech stack',x:75,s:'techfp'},
+    {i:'🔐',t:'Certificate Transparency',d:'SSL/TLS certs, CT logs, subdomain discovery',x:50,s:'certt'},
+    {i:'🧰',t:'Tool Explorer (30+)',d:'Searchable catalog with usage examples',x:100,s:'tools'},
+    {i:'💻',t:'Command Playground',d:'Simulated terminal for recon commands',x:100,s:'playground'},
+    {i:'🔬',t:'Enterprise Labs',d:'Guided, practice, and enterprise labs',x:150,s:'labs'},
+    {i:'📝',t:'Assessments',d:'MCQs, flashcards, scenarios',x:100,s:'assess'},
+    {i:'📊',t:'My Dashboard',d:'XP, badges, progress tracking',x:0,s:'dashboard'},
+    {i:'🤖',t:'AI Recon Assistant',d:'AI-powered recon workflow explorer',x:75,s:'airecon'},
+    {i:'🏗️',t:'Digital Twin',d:'Interactive GFS infrastructure viz',x:75,s:'twin'},
+    {i:'🛡️',t:'SOC Detection View',d:'Blue team — detecting reconnaissance',x:100,s:'soc'},
+    {i:'📋',t:'Final Recon Report',d:'Comprehensive report template',x:100,s:'report'}
+  ].map(c=>`<div class="cd topic-c" data-goto="${c.s}"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:22px">${c.i}</div><div><div class="tt">${c.t}</div><div class="td2">${c.d}</div><div class="tm"><span>⚡ ${c.x} XP</span><span>📖 15 min</span></div></div></div></div>`).join('')}</div>`;
+}
+
+function rCompany(){
+  return `<div class="hero"><h1>🏛️ Global Financial Services — Company Profile</h1><p>Understanding the organization is step one of any engagement.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">🏢</div><h3>Organization</h3></div><table class="dtbl"><tr><td><strong>Name</strong></td><td>${GFS.name}</td></tr><tr><td><strong>Industry</strong></td><td>${GFS.ind}</td></tr><tr><td><strong>Founded</strong></td><td>${GFS.founded}</td></tr><tr><td><strong>HQ</strong></td><td>${GFS.hq}</td></tr><tr><td><strong>Employees</strong></td><td>${GFS.emp.toLocaleString()}</td></tr><tr><td><strong>Revenue</strong></td><td>${GFS.rev}</td></tr><tr><td><strong>Domain</strong></td><td>${GFS.domain}</td></tr></table></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🌐</div><h3>Internet Domains</h3></div>${GFS.doms.map(d=>`<div style="padding:6px 0;border-bottom:1px solid var(--b1);font-family:var(--fm);font-size:11px">🔗 ${d}</div>`).join('')}<div class="ib" style="margin-top:10px">💡 Each domain is a separate attack surface requiring individual recon.</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">👥</div><h3>Key Personnel (OSINT)</h3></div>${GFS.staff.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1)"><div style="width:28px;height:28px;background:var(--ga);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${e.n.split(' ').map(x=>x[0]).join('')}</div><div><div style="font-size:12px;font-weight:600">${e.n}</div><div style="font-size:10px;color:var(--t3)">${e.r} • ${e.d}</div></div><div style="margin-left:auto;font-size:9px;color:var(--al)">${e.e}</div></div>`).join('')}<div class="wb" style="margin-top:10px">⚠️ Employee info is OSINT gold. LinkedIn reveals org structure, tech stack, and social engineering targets.</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">☁️</div><h3>Cloud & Technology</h3></div><div style="margin-bottom:10px"><div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Cloud</div><div class="bg"><span class="tp" style="background:rgba(255,153,0,.12);color:#ff9900">☁️ AWS</span><span class="tp" style="background:rgba(0,120,215,.12);color:#0078d7">☁️ Azure</span></div></div><div><div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Tech Stack</div><div class="bg">${GFS.tech.map(t=>`<span class="tp" style="background:rgba(79,124,255,.08);color:var(--al)">${t}</span>`).join('')}</div></div><div class="ib" style="margin-top:10px">💡 Tech stack is discoverable via headers, source, job postings, and Shodan.</div></div></div>`;
+}
+
+function rFundamentals(){
+  return `<div class="hero"><h1>📖 Reconnaissance Fundamentals</h1><p>The art and science of gathering information before any action.</p></div>
+  <div class="tbs" data-tg="fun"><div class="tb on" data-t="fun-w">What is Recon?</div><div class="tb" data-t="fun-e">Ethical Hacking</div><div class="tb" data-t="fun-m">Methodology</div><div class="tb" data-t="fun-k">Kill Chain</div><div class="tb" data-t="fun-mt">MITRE ATT&CK</div></div>
+  <div id="fun-w" class="tc on"><div class="g2"><div class="cd"><div class="cd-h"><div class="ic">❓</div><h3>What is Reconnaissance?</h3></div><p style="font-size:12px;line-height:1.8">Reconnaissance is the <strong>first phase</strong> of any security assessment. It involves systematically gathering information about a target's people, infrastructure, and systems.</p><div class="ib" style="margin-top:10px"><strong>🎯 Simple:</strong> Like being a detective — gather clues before making your move.</div><div style="margin-top:12px"><h4 style="font-size:12px;margin-bottom:6px">What You Learn:</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">${['Domain names','IP addresses','Employee names','Email formats','Technology stack','Cloud providers','Subdomains','SSL certificates','Public documents','Social media','Job postings','News articles'].map(x=>`<div style="padding:4px 8px;background:var(--glass);border-radius:var(--rx);font-size:10px;border:1px solid var(--b1)">✓ ${x}</div>`).join('')}</div></div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔄</div><h3>Two Types</h3></div><div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:var(--rs);padding:10px;margin-bottom:10px"><div style="font-weight:600;color:var(--ok);margin-bottom:3px;font-size:12px">🟢 Passive Recon</div><p style="font-size:11px;line-height:1.6">Never send packets to target. Use public info only. Target has zero chance of detecting you.</p><div style="font-size:10px;color:var(--t3);margin-top:4px">Google dorking, Shodan, LinkedIn, WHOIS</div></div><div style="background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.15);border-radius:var(--rs);padding:10px"><div style="font-weight:600;color:var(--err);margin-bottom:3px;font-size:12px">🔴 Active Recon</div><p style="font-size:11px;line-height:1.6">Directly interact with target. Send packets, probe services. Target CAN detect you.</p><div style="font-size:10px;color:var(--t3);margin-top:4px">Port scanning, zone transfers, banner grabbing</div></div><div class="wb" style="margin-top:10px">⚠️ Active recon without authorization is illegal. Always get written permission.</div></div></div></div>
+  <div id="fun-e" class="tc"><div class="cd"><div class="cd-h"><div class="ic">⚖️</div><h3>Ethical Hacking Framework</h3></div><div class="g3"><div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:var(--rs);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">⚪</div><div style="font-weight:600;color:var(--ok);margin-bottom:3px">White Hat</div><p style="font-size:10px;color:var(--t2)">Authorized testers. Work under contract. Report findings. Legally protected.</p></div><div style="background:rgba(255,176,0,.06);border:1px solid rgba(255,176,0,.15);border-radius:var(--rs);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">🟡</div><div style="font-weight:600;color:var(--warn);margin-bottom:3px">Grey Hat</div><p style="font-size:10px;color:var(--t2)">Find vulns without permission but disclose. Legal grey area.</p></div><div style="background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.15);border-radius:var(--rs);padding:14px;text-align:center"><div style="font-size:24px;margin-bottom:6px">⚫</div><div style="font-weight:600;color:var(--err);margin-bottom:3px">Black Hat</div><p style="font-size:10px;color:var(--t2)">Malicious. No authorization. Criminal under CFAA.</p></div></div><div style="margin-top:12px"><h4 style="font-size:11px;margin-bottom:6px">📜 Key Documents:</h4><div class="bg">${['Rules of Engagement','Statement of Work','Written Authorization','NDA','Scope Definition','Emergency Contacts'].map(x=>`<span class="tp" style="background:rgba(79,124,255,.08);color:var(--al);padding:3px 8px;font-size:10px">${x}</span>`).join('')}</div></div></div></div>
+  <div id="fun-m" class="tc"><div class="cd"><div class="cd-h"><div class="ic">📋</div><h3>Recon Methodology</h3></div><div class="tl">${[{t:'1. Define Scope',d:'Identify targets, IP ranges, out-of-scope assets. Get authorization.'},{t:'2. Passive Gathering',d:'WHOIS, DNS, search engines, social media, tech fingerprinting.'},{t:'3. Active Gathering',d:'Port scanning, service enum, banner grabbing, subdomain brute-force.'},{t:'4. Target Profiling',d:'Organize: infrastructure map, employee list, tech stack.'},{t:'5. Attack Surface Mapping',d:'Identify all entry points: web apps, APIs, email, VPN, cloud.'},{t:'6. Vuln Identification',d:'Map technologies to CVEs.'},{t:'7. Reporting',d:'Document with evidence, risk ratings, remediation.'}].map(s=>`<div class="tli"><h4>${s.t}</h4><p>${s.d}</p></div>`).join('')}</div></div></div>
+  <div id="fun-k" class="tc"><div class="cd"><div class="cd-h"><div class="ic">⛓️</div><h3>Cyber Kill Chain — Lockheed Martin</h3></div><p style="font-size:12px;line-height:1.7;margin-bottom:12px">The 7 stages of a cyberattack. <strong>Reconnaissance is Stage 1.</strong></p><div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px">${['1. Reconnaissance','2. Weaponization','3. Delivery','4. Exploitation','5. Installation','6. C2','7. Actions'].map((s,i)=>`<div style="flex:1;min-width:100px;padding:10px 6px;text-align:center;border-radius:var(--rx);font-size:10px;font-weight:600;${i===0?'background:var(--ga);color:#fff':'background:var(--glass);border:1px solid var(--b1);color:var(--t2)'}">${s}</div>`).join('')}</div><div class="ib">💡 If recon fails, every subsequent stage is harder. Detecting recon is the earliest warning.</div></div></div>
+  <div id="fun-mt" class="tc"><div class="cd"><div class="cd-h"><div class="ic">🎯</div><h3>MITRE ATT&CK — TA0043 Reconnaissance</h3></div><table class="dtbl"><thead><tr><th>ID</th><th>Technique</th><th>Description</th></tr></thead><tbody>${[['T1595','Active Scanning','Scanning IPs, ports, services'],['T1592','Gather Host Info','Hardware, software, firmware'],['T1589','Gather Identity Info','Names, emails, credentials'],['T1590','Gather Network Info','DNS, domains, topology'],['T1591','Gather Org Info','Business relationships, org charts'],['T1593','Search Open Websites','Social media, code repos, job sites'],['T1596','Search Technical DBs','Shodan, Censys, CT logs'],['T1598','Phishing for Info','Pretexting to gather data']].map(r=>`<tr><td><span class="tp mt">${r[0]}</span></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function rPassive(){
+  return `<div class="hero"><h1>🕵️ Passive Reconnaissance</h1><p>Information gathering without sending a single packet to the target.</p><span class="tp" style="background:rgba(0,230,118,.12);color:var(--ok);margin-top:6px">🟢 Undetectable</span></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">🔍</div><h3>WHOIS Lookup</h3><span class="tg tg-p">PASSIVE</span></div><div class="cb"><span class="p">$</span> whois gfs-financial.com\n\nDomain Name: GFS-FINANCIAL.COM\nRegistrar: MarkMonitor Inc.\nCreation Date: 1998-03-15\nRegistrant: Global Financial Services\nName Server: NS1.GFS-FINANCIAL.COM\nName Server: NS2.GFS-FINANCIAL.COM</div><div class="ib">💡 Reveals: org name, maturity, DNS infrastructure, registrar choice.</div><span class="tp mt" style="margin-top:8px">T1589</span></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔎</div><h3>Google Dorking</h3><span class="tg tg-p">PASSIVE</span></div><table class="dtbl"><thead><tr><th>Operator</th><th>Example</th></tr></thead><tbody><tr><td><code>site:</code></td><td><code>site:gfs.com</code></td></tr><tr><td><code>filetype:</code></td><td><code>filetype:pdf</code></td></tr><tr><td><code>intitle:</code></td><td><code>intitle:"index of"</code></td></tr><tr><td><code>inurl:</code></td><td><code>inurl:admin</code></td></tr></tbody></table><div class="cb" style="margin-top:8px"><span class="p">Google:</span> site:gfs-financial.com filetype:pdf\n\nResults:\n  /docs/annual-report-2024.pdf\n  /internal/employee-handbook.pdf</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🌐</div><h3>Shodan Search</h3><span class="tg tg-p">PASSIVE</span></div><div class="cb"><span class="p">$</span> shodan search "hostname:gfs-financial.com"\n\n203.0.113.10 | nginx/1.18.0 | HTTP/2 | US\n  Ports: 80, 443\n203.0.113.20 | Exchange | US\n  Ports: 443, 587, 993\n203.0.113.40 | Spring Boot | US\n  Ports: 443, 8080\n  Actuator: /actuator/health exposed</div><div class="db">🚨 Spring Boot Actuator exposed! Info disclosure + potential RCE.</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">📧</div><h3>Email Harvesting</h3><span class="tg tg-p">PASSIVE</span></div><div class="cb"><span class="p">$</span> theHarvester -d gfs-financial.com -b all\n\n[*] Emails found:\n  s.chen@gfs-financial.com\n  m.torres@gfs-financial.com\n  p.patel@gfs-financial.com\n  a.johnson@gfs-financial.com\n\n[*] Pattern: firstname.lastname@\n[*] Hosts: mail (203.0.113.20), vpn (203.0.113.30)</div><div class="ib">💡 Email patterns enable targeted phishing and username generation.</div></div></div>`;
+}
+
+function rActive(){
+  return `<div class="hero"><h1>⚡ Active Reconnaissance</h1><p>Direct interaction with the target. More data, but detectable.</p><span class="tp" style="background:rgba(255,82,82,.12);color:var(--err);margin-top:6px">🔴 Detectable</span></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">🗺️</div><h3>Port Scanning (Nmap)</h3><span class="tg tg-a">ACTIVE</span></div><div class="cb"><span class="p">$</span> nmap -sV -sC -T4 203.0.113.10\n\nPORT    STATE SERVICE  VERSION\n22/tcp  open  ssh      OpenSSH 8.9p1\n80/tcp  open  http     nginx 1.18.0\n443/tcp open  https    nginx 1.18.0\n3306/tcp open mysql    MySQL 8.0.32</div><div class="wb">⚠️ Nmap generates distinctive patterns. IDS should detect SYN scans.</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔗</div><h3>DNS Zone Transfer</h3><span class="tg tg-a">ACTIVE</span></div><div class="cb"><span class="p">$</span> dig @ns2.gfs-financial.com AXFR\n\n;; ANSWER SECTION:\nwww.gfs-financial.com.   IN A 203.0.113.10\nmail.gfs-financial.com.  IN A 203.0.113.20\ndev.gfs-financial.com.   IN A 203.0.113.45\nadmin.gfs-financial.com. IN A 203.0.113.55\ndb.gfs-financial.com.    IN A 203.0.113.70</div><div class="db">🚨 CRITICAL: Zone transfer succeeded! Revealed internal infra including dev, admin, and DB servers.</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🏷️</div><h3>Banner Grabbing</h3><span class="tg tg-a">ACTIVE</span></div><div class="cb"><span class="p">$</span> curl -I https://gfs-financial.com\n\nHTTP/2 200\nserver: nginx/1.18.0\nx-powered-by: Express\nx-aspnet-version: 4.0.30319\nstrict-transport-security: max-age=31536000</div><div class="ib">💡 Reveals: nginx 1.18 (known CVEs), Express.js, ASP.NET 4.0 (outdated).</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">📁</div><h3>Directory Enumeration</h3><span class="tg tg-a">ACTIVE</span></div><div class="cb"><span class="p">$</span> gobuster dir -u https://gfs.com -w common.txt\n\n/admin    (301)\n/api      (200)\n/backup   (403)\n/login    (200)\n/swagger  (200)\n/robots.txt (200)</div><div class="db">🚨 /admin, /backup, /swagger found — shouldn't be public!</div></div></div>`;
+}
+
+function rOSINT(){
+  return `<div class="hero"><h1>🌐 OSINT — Open Source Intelligence</h1><p>Intelligence from publicly available sources. Legal, powerful, foundational.</p></div>
+  <div class="cd" style="margin-bottom:14px"><div class="cd-h"><div class="ic">📚</div><h3>What is OSINT?</h3></div><p style="font-size:12px;line-height:1.8"><strong>OSINT</strong> = intelligence from publicly available sources. Not classified, not stolen. The CIA term dates to the 1980s. Today, OSINT accounts for ~80-90% of all intelligence gathering.</p></div>
+  <div class="g3">${[{i:'🔍',t:'Search Engines',d:'Google, Bing, DuckDuckGo — the starting point.',s:['Google','Bing','Yandex']},{i:'📱',t:'Social Media',d:'LinkedIn (employees), Twitter (tech), Facebook (personal).',s:['LinkedIn','Twitter/X','Reddit']},{i:'💻',t:'Code Repos',d:'GitHub/GitLab — devs commit API keys, passwords, configs.',s:['GitHub','GitLab','Bitbucket']},{i:'🌐',t:'Internet Scanners',d:'Shodan, Censys, FOFA scan the entire internet.',s:['Shodan','Censys','FOFA']},{i:'📜',t:'DNS & WHOIS',d:'Domain registration, DNS records, CT logs.',s:['WHOIS','DNS','CT Logs']},{i:'📰',t:'News & Docs',d:'Press releases, filings, job postings, patents.',s:['SEC Filings','Job Boards','Patents']}].map(c=>`<div class="cd"><div style="font-size:22px;margin-bottom:6px">${c.i}</div><h4 style="font-size:12px;margin-bottom:4px">${c.t}</h4><p style="font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:8px">${c.d}</p><div class="bg">${c.s.map(x=>`<span class="tp" style="background:rgba(79,124,255,.08);color:var(--al)">${x}</span>`).join('')}</div></div>`).join('')}</div>`;
+}
+
+function rDNS(){
+  return `<div class="hero"><h1>🔗 DNS Intelligence</h1><p>The internet's most critical infrastructure — and richest recon data source.</p></div>
+  <div class="tbs" data-tg="dns"><div class="tb on" data-t="dns-h">How DNS Works</div><div class="tb" data-t="dns-r">Record Types</div><div class="tb" data-t="dns-t">DNS Tools</div><div class="tb" data-t="dns-g">GFS DNS Map</div></div>
+  <div id="dns-h" class="tc on"><div class="cd"><div class="cd-h"><div class="ic">🔄</div><h3>DNS Resolution Flow</h3></div><div class="svg-c"><svg width="680" height="300" viewBox="0 0 680 300"><defs><marker id="ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4f7cff"/></marker></defs>
+<g class="sn" data-info="computer"><rect class="nb" x="10" y="120" width="110" height="50"/><text class="ni2" x="65" y="143">💻</text><text class="nl" x="65" y="163">Your Computer</text></g>
+<g class="sn" data-info="resolver"><rect class="nb" x="170" y="120" width="110" height="50"/><text class="ni2" x="225" y="143">🔄</text><text class="nl" x="225" y="163">DNS Resolver</text></g>
+<g class="sn" data-info="root"><rect class="nb" x="330" y="15" width="110" height="50"/><text class="ni2" x="385" y="38">🌐</text><text class="nl" x="385" y="58">Root Servers (.)</text></g>
+<g class="sn" data-info="tld"><rect class="nb" x="330" y="120" width="110" height="50"/><text class="ni2" x="385" y="143">📡</text><text class="nl" x="385" y="163">TLD Servers (.com)</text></g>
+<g class="sn" data-info="auth"><rect class="nb" x="330" y="225" width="110" height="50"/><text class="ni2" x="385" y="248">📋</text><text class="nl" x="385" y="268">Authoritative NS</text></g>
+<g class="sn" data-info="web"><rect class="nb" x="510" y="120" width="110" height="50"/><text class="ni2" x="565" y="143">🖥️</text><text class="nl" x="565" y="163">Web Server</text></g>
+<line class="sl on" x1="120" y1="145" x2="168" y2="145" marker-end="url(#ah)"/>
+<line class="sl" x1="225" y1="120" x2="330" y2="65" marker-end="url(#ah)"/>
+<line class="sl" x1="225" y1="145" x2="328" y2="145" marker-end="url(#ah)"/>
+<line class="sl" x1="225" y1="170" x2="330" y2="245" marker-end="url(#ah)"/>
+<line class="sl on" x1="440" y1="145" x2="508" y2="145" marker-end="url(#ah)"/>
+<text x="130" y="137" fill="#4f7cff" font-size="8" font-family="var(--fm)">1. Query</text>
+<text x="255" y="80" fill="#5868a0" font-size="8" font-family="var(--fm)">2. Ask root</text>
+<text x="260" y="137" fill="#5868a0" font-size="8" font-family="var(--fm)">3. Ask TLD</text>
+<text x="255" y="225" fill="#5868a0" font-size="8" font-family="var(--fm)">4. Ask auth</text>
+<text x="460" y="137" fill="#4f7cff" font-size="8" font-family="var(--fm)">5. Answer!</text>
+</svg></div><p style="font-size:11px;line-height:1.7;color:var(--t2)">1. You type <code>www.gfs-financial.com</code><br>2. Resolver asks Root: "Where is .com?" → "Ask TLD"<br>3. Resolver asks TLD: "Where is gfs-financial.com?" → "Ask ns1.gfs-financial.com"<br>4. Resolver asks Auth: "What is www?" → "203.0.113.10"<br>5. Browser connects — whole process ~50ms!</p></div></div>
+  <div id="dns-r" class="tc"><div class="cd"><div class="cd-h"><div class="ic">📋</div><h3>DNS Record Types</h3></div><table class="dtbl"><thead><tr><th>Type</th><th>Name</th><th>Purpose</th><th>Example</th></tr></thead><tbody>${[['A','Address','Domain→IPv4','gfs.com→203.0.113.10'],['AAAA','IPv6','Domain→IPv6','gfs.com→2606:4700::1'],['MX','Mail','Email server','10 mail.gfs.com'],['NS','Name Server','DNS servers','ns1.gfs.com'],['CNAME','Alias','Domain alias','www→gfs.com'],['TXT','Text','SPF,DKIM','v=spf1 include:...'],['SOA','Authority','Zone metadata','ns1 admin 2024011501'],['PTR','Reverse','IP→domain','10.113.0.203→mail'],['SRV','Service','Service loc','_sip._tcp→sip:5060']].map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td><code style="font-size:10px">${r[3]}</code></td></tr>`).join('')}</tbody></table></div></div>
+  <div id="dns-t" class="tc"><div class="g2">${[{n:'dig',c:'dig gfs.com ANY +noall +answer',d:'Definitive DNS tool. Full control.'},{n:'nslookup',c:'nslookup -type=MX gfs.com',d:'Cross-platform, simpler.'},{n:'host',c:'host -t TXT gfs.com',d:'Quick checks, clean output.'},{n:'DNSRecon',c:'dnsrecon -d gfs.com -t axfr',d:'Zone transfers, brute-force.'}].map(t=>`<div class="cd"><div class="cd-h"><div class="ic">🔧</div><h3>${t.n}</h3></div><p style="font-size:11px;color:var(--t2);margin-bottom:8px">${t.d}</p><div class="cb"><span class="p">$</span> ${t.c}</div></div>`).join('')}</div></div>
+  <div id="dns-g" class="tc"><div class="cd"><div class="cd-h"><div class="ic">🏢</div><h3>GFS DNS Infrastructure</h3></div><div class="svg-c"><svg width="640" height="280" viewBox="0 0 640 280">${GFS.subs2.map((s,i)=>{const x=10+(i%5)*126,y=10+Math.floor(i/5)*130;const icons={Nginx:'🌐',Exchange:'📧',OpenVPN:'🔒','Spring Boot':'☕',React:'⚛️',Apache:'🪶',Cloudflare:'☁️',WordPress:'📝'};return`<g class="sn" data-sub="${s.s}"><rect class="nb" x="${x}" y="${y}" width="112" height="95" rx="8"/><text class="ni2" x="${x+56}" y="${y+28}">${icons[s.t]||'🖥️'}</text><text class="nl" x="${x+56}" y="${y+48}" font-size="9" font-weight="600">${s.s}.gfs-financial.com</text><text x="${x+56}" y="${y+64}" fill="#5868a0" font-size="8" text-anchor="middle" font-family="var(--fm)">${s.ip}</text><text x="${x+56}" y="${y+78}" fill="#7ea0ff" font-size="8" text-anchor="middle">${s.t}</text></g>`}).join('')}</svg></div><div class="ib">💡 Click any node for details. Each subdomain = potential attack vector.</div></div></div>`;
+}
+
+function rGDork(){
+  return `<div class="hero"><h1>🔎 Google Dorking</h1><p>Advanced search operators to find exposed information.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">📖</div><h3>Operators</h3></div><table class="dtbl"><thead><tr><th>Op</th><th>Desc</th><th>Example</th></tr></thead><tbody>${[['site:','Restrict domain','site:gfs.com'],['filetype:','File ext','filetype:pdf'],['intitle:','Word in title','intitle:"index of"'],['inurl:','Word in URL','inurl:admin'],['intext:','Word in body','intext:"password"'],['cache:','Cached ver','cache:gfs.com'],['related:','Similar sites','related:gfs.com']].map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td><code style="font-size:10px">${r[2]}</code></td></tr>`).join('')}</tbody></table></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🎯</div><h3>GFS Dork Examples</h3></div>${[{d:'site:gfs-financial.com filetype:pdf',r:'Find PDFs — may expose internal reports'},{d:'site:gfs-financial.com intitle:"index of"',r:'Open directories — may reveal backups'},{d:'site:gfs-financial.com ext:sql | ext:dbf',r:'Database files — CRITICAL if found'},{d:'site:gfs-financial.com inurl:admin',r:'Admin pages — may have default creds'},{d:'site:gfs-financial.com intext:"error" "sql"',r:'SQL errors — reveals DB type, injection points'}].map(d=>`<div style="padding:8px;margin:6px 0;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rx)"><code style="font-size:10px;color:var(--al)">${d.d}</code><p style="font-size:10px;color:var(--warn);margin-top:3px">⚠️ ${d.r}</p></div>`).join('')}</div></div>`;
+}
+
+function rEmail(){
+  return `<div class="hero"><h1>📧 Email & People Intelligence</h1><p>Emails are the #1 attack vector. Harvesting emails is critical recon.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">📧</div><h3>Email Harvesting</h3></div><div class="cb"><span class="p">$</span> theHarvester -d gfs-financial.com -b all\n\n[*] Emails found (14):\n  s.chen@gfs-financial.com\n  m.torres@gfs-financial.com\n  p.patel@gfs-financial.com\n  j.wilson@gfs-financial.com\n  a.johnson@gfs-financial.com\n  hr@gfs-financial.com\n  info@gfs-financial.com\n  support@gfs-financial.com\n\n[*] Pattern: firstname.lastname@\n[*] Hosts: mail, vpn, api, dev</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">👤</div><h3>Employee Profiling</h3></div>${GFS.staff.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin:4px 0;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rx)"><div style="width:30px;height:30px;background:var(--ga);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#fff">${e.n.split(' ').map(x=>x[0]).join('')}</div><div><div style="font-size:12px;font-weight:600">${e.n}</div><div style="font-size:10px;color:var(--t3)">${e.r} — ${e.d}</div></div></div>`).join('')}<div class="wb">⚠️ LinkedIn reveals: tech stack, org structure, hiring needs, office locations.</div></div></div>`;
+}
+
+function rTechFP(){
+  return `<div class="hero"><h1>🖥️ Technology Fingerprinting</h1><p>Identifying what technologies a target uses — the bridge to vulnerability assessment.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">📡</div><h3>HTTP Headers</h3></div><div class="cb"><span class="p">$</span> curl -I https://gfs-financial.com\n\nHTTP/2 200\nserver: nginx/1.18.0          ← Server + version\nx-powered-by: Express          ← Backend\nx-aspnet-version: 4.0.30319    ← .NET\nx-generator: WordPress 6.4     ← CMS\nstrict-transport-security: ...</div><div class="ib">💡 Remove: <code>server_tokens off;</code> in Nginx, remove X-Powered-By.</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔍</div><h3>Web Tech Detection</h3></div><div class="cb"><span class="p">$</span> whatweb gfs-financial.com -a 3\n\n[200 OK] nginx[1.18.0] WordPress[6.4]\njQuery[3.7.1] Google-Analytics[GA4]\nBootstrap[5.3] reCAPTCHA[Enterprise]</div><div style="margin-top:10px"><div class="bg">${['Nginx 1.18','WordPress 6.4','jQuery 3.7','Bootstrap 5.3','Express.js','GA4'].map(t=>`<span class="tp" style="background:rgba(79,124,255,.08);color:var(--al)">${t}</span>`).join('')}</div></div></div></div>`;
+}
+
+function rCertT(){
+  return `<div class="hero"><h1>🔐 Certificate Transparency</h1><p>SSL/TLS certificates are publicly logged — revealing subdomains and infrastructure.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">📜</div><h3>What is CT?</h3></div><p style="font-size:12px;line-height:1.8">Every SSL/TLS certificate must be logged in public CT logs. When GFS requests a cert for <code>api.gfs-financial.com</code>, it appears in CT — even if the subdomain isn't listed anywhere else.</p><div class="cb" style="margin-top:10px"><span class="p">$</span> curl -s "https://crt.sh/?q=%.gfs-financial.com&output=json"\n\n"*.gfs-financial.com"\n"www.gfs-financial.com"\n"mail.gfs-financial.com"\n"api.gfs-financial.com"\n"dev.gfs-financial.com"\n"staging.gfs-financial.com"\n"admin.gfs-financial.com"\n"payments.gfs-financial.com"</div></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔍</div><h3>CT Log Sources</h3></div>${[{n:'crt.sh',u:'crt.sh',d:'Free CT search by Sectigo.'},{n:'Censys',u:'censys.io',d:'Certificate search with metadata.'},{n:'CertSpotter',u:'sslmate.com/certspotter',d:'CT monitoring with alerts.'}].map(s=>`<div style="padding:8px;margin:5px 0;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rx)"><div style="font-size:12px;font-weight:600">${s.n}</div><div style="font-size:10px;color:var(--t3)">${s.u}</div><div style="font-size:10px;color:var(--t2);margin-top:3px">${s.d}</div></div>`).join('')}</div></div>`;
+}
+
+function rTools(){
+  return `<div class="hero"><h1>🧰 Recon Tool Explorer</h1><p>Searchable catalog of 30+ tools with commands, output, and enterprise usage.</p></div>
+  <div class="sbox"><span class="si">🔍</span><input type="text" id="tsearch" placeholder="Search tools..."></div>
+  <div class="tbs" id="ttabs"><div class="tb on" data-cat="all">All</div><div class="tb" data-cat="OSINT">OSINT</div><div class="tb" data-cat="DNS">DNS</div><div class="tb" data-cat="Search">Search</div><div class="tb" data-cat="Network">Network</div><div class="tb" data-cat="Web">Web</div><div class="tb" data-cat="Fingerprinting">Fingerprinting</div><div class="tb" data-cat="Threat Intel">Threat Intel</div></div>
+  <div id="tgrid" class="g2">${renderToolGrid('all')}</div>`;
+}
+function renderToolGrid(cat){
+  let t=TOOLS;if(cat!=='all')t=t.filter(x=>x.cat===cat);
+  return t.map(x=>`<div class="cd" data-tool="${x.n}" style="cursor:pointer"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:22px">${x.icon}</div><div><div style="font-size:13px;font-weight:600">${x.n}</div><div style="font-size:9px;color:var(--t3)">${x.cat}</div></div><span class="tg tg-${x.typ==='passive'?'p':'a'}" style="margin-left:auto">${x.typ.toUpperCase()}</span></div><p style="font-size:11px;color:var(--t2);line-height:1.5">${x.d}</p></div>`).join('');
+}
+function showTool(n){
+  const t=TOOLS.find(x=>x.n===n);if(!t)return;
+  openModal(t.icon+' '+t.n,`<p style="font-size:12px;line-height:1.8"><strong>Description:</strong> ${t.d}</p><p style="margin-top:6px"><strong>History:</strong> ${t.hist}</p><p style="margin-top:6px"><strong>Purpose:</strong> ${t.pur}</p><p style="margin-top:6px"><strong>Install:</strong> <code>${t.inst}</code></p><h4 style="margin-top:14px;margin-bottom:6px">Commands:</h4><div class="cb">${t.cmds.map(c=>'$ '+c).join('\n')}</div><h4 style="margin-top:14px;margin-bottom:6px">Output:</h4><div class="cb">${t.out}</div><h4 style="margin-top:14px;margin-bottom:6px">Enterprise Usage:</h4><p style="font-size:12px">${t.use}</p><h4 style="margin-top:14px;margin-bottom:6px">Blue Team:</h4><p style="font-size:12px">${t.blue}</p><h4 style="margin-top:14px;margin-bottom:6px">Related:</h4><div class="bg">${t.rel.map(r=>`<span class="tp" style="background:rgba(79,124,255,.08);color:var(--al)">${r}</span>`).join('')}</div>`);
+  addXP(3);
+}
+
+function rPlayground(){
+  return `<div class="hero"><h1>💻 Command Playground</h1><p>Practice recon commands in a simulated terminal. All output is fictional GFS training data.</p></div>
+  <div class="cd"><div class="cd-h"><div class="ic">⌨️</div><h3>Interactive Terminal</h3></div>
+  <div class="term"><div class="term-h"><div class="td td-r"></div><div class="td td-y"></div><div class="td td-g"></div><span class="term-t">analyst@gfs-recon:~</span></div><div class="term-b" id="tb"><span class="i">ShadowXLab Recon Terminal v2.0 — Type a command or click a preset.</span>\n<span class="i">Commands: whois, dig, nslookup, host, nmap, curl, theHarvester, amass, subfinder, dnsrecon, shodan</span>\n<span class="i">Target: gfs-financial.com (203.0.113.10-70) | Fictional training</span>\n</div><div class="term-i"><span class="p">$</span><input type="text" id="tinp" placeholder="Type a command..."></div></div>
+  <div style="margin-top:10px"><h4 style="font-size:11px;margin-bottom:6px;color:var(--t3)">Quick Commands:</h4><div class="bg">${['whois gfs-financial.com','dig gfs-financial.com ANY','dig gfs-financial.com MX','nslookup gfs-financial.com','host gfs-financial.com','nmap -sV 203.0.113.10','curl -I https://gfs-financial.com','theHarvester -d gfs-financial.com -b all','amass enum -passive -d gfs-financial.com','subfinder -d gfs-financial.com','dnsrecon -d gfs-financial.com','shodan search hostname:gfs-financial.com'].map(c=>`<button class="btn btn-o btn-s" data-cmd="${c}">${c.split(' ')[0]}</button>`).join('')}</div></div></div>`;
+}
+
+function rLabs(){
+  return `<div class="hero"><h1>🔬 Enterprise Labs</h1><p>Hands-on exercises using fictional GFS training data. No real systems scanned.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">🟢</div><h3>Lab 1: Passive Recon</h3><span class="tg tg-p">GUIDED</span></div><div class="lb"><div class="lb-h">📋 Instructions</div><div class="lb-s"><div class="ls"><div class="ls-n">1</div><div>Run: <code>whois gfs-financial.com</code> in Playground</div></div><div class="ls"><div class="ls-n">2</div><div>Identify registrar, dates, name servers</div></div><div class="ls"><div class="ls-n">3</div><div>Run: <code>dig gfs-financial.com MX</code></div></div><div class="ls"><div class="ls-n">4</div><div>Run: <code>theHarvester -d gfs-financial.com -b all</code></div></div><div class="ls"><div class="ls-n">5</div><div>Document findings</div></div></div></div><button class="btn btn-p" data-lab="1">✅ Complete Lab</button></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🟡</div><h3>Lab 2: DNS Enumeration</h3><span class="tg tg-a">PRACTICE</span></div><div class="lb"><div class="lb-h">📋 Instructions</div><div class="lb-s"><div class="ls"><div class="ls-n">1</div><div><code>dig gfs-financial.com ANY</code></div></div><div class="ls"><div class="ls-n">2</div><div><code>dig @ns2.gfs-financial.com AXFR</code></div></div><div class="ls"><div class="ls-n">3</div><div>Document ALL discovered subdomains</div></div><div class="ls"><div class="ls-n">4</div><div><code>dnsrecon -d gfs-financial.com</code></div></div><div class="ls"><div class="ls-n">5</div><div>Identify the misconfiguration</div></div></div></div><button class="btn btn-p" data-lab="2">✅ Complete Lab</button></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔴</div><h3>Lab 3: Active Recon</h3><span class="tg tg-a">ENTERPRISE</span></div><div class="lb"><div class="lb-h">📋 Instructions</div><div class="lb-s"><div class="ls"><div class="ls-n">1</div><div><code>nmap -sV -sC 203.0.113.10</code></div></div><div class="ls"><div class="ls-n">2</div><div>Analyze: SSH(22), HTTP(80), HTTPS(443), MySQL(3306)</div></div><div class="ls"><div class="ls-n">3</div><div>Banner grab: <code>curl -I https://gfs-financial.com</code></div></div><div class="ls"><div class="ls-n">4</div><div>Research CVEs for detected versions</div></div><div class="ls"><div class="ls-n">5</div><div>Document risks</div></div></div></div><button class="btn btn-p" data-lab="3">✅ Complete Lab</button></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🔍</div><h3>Lab 4: SOC Investigation</h3><span class="tg tg-o">SOC</span></div><div class="lb"><div class="lb-h">📋 Instructions</div><div class="lb-s"><div class="ls"><div class="ls-n">1</div><div>IDS alert: "High DNS queries from 198.51.100.50"</div></div><div class="ls"><div class="ls-n">2</div><div>WAF: 500+ 404s in 10min — directory enum</div></div><div class="ls"><div class="ls-n">3</div><div>CT shows new cert for staging.gfs-financial.com</div></div><div class="ls"><div class="ls-n">4</div><div>Correlate: What attack phase is this?</div></div><div class="ls"><div class="ls-n">5</div><div>Write incident report with MITRE mapping</div></div></div></div><button class="btn btn-p" data-lab="4">✅ Complete Lab</button></div></div>`;
+}
+
+function rAssess(){
+  return `<div class="hero"><h1>📝 Assessments</h1><p>Test your knowledge with quizzes, flashcards, and scenarios.</p></div>
+  <div class="tbs" data-tg="ass"><div class="tb on" data-t="ass-q">Quiz</div><div class="tb" data-t="ass-f">Flashcards</div><div class="tb" data-t="ass-s">Scenarios</div></div>
+  <div id="ass-q" class="tc on"><div class="cd"><div class="cd-h"><div class="ic">❓</div><h3>Knowledge Check</h3></div><div id="qbox">${QUIZZES.map((q,i)=>`<div class="qq" style="margin-bottom:16px;padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs)"><div style="font-size:12px;font-weight:600;margin-bottom:10px">${i+1}. ${q.q}</div>${q.o.map((o,j)=>`<div class="qo" data-qi="${i}" data-oi="${j}">${o}</div>`).join('')}<div class="qe" style="display:none;margin-top:8px;padding:8px;background:rgba(79,124,255,.06);border-radius:var(--rx);font-size:11px;color:var(--al)"></div></div>`).join('')}<button class="btn btn-p" id="qsub" style="margin-top:10px">Submit All</button><div id="qres" style="margin-top:10px"></div></div></div>
+  <div id="ass-f" class="tc"><div class="cd"><div class="cd-h"><div class="ic">📇</div><h3>Flashcards</h3><span style="margin-left:auto;font-size:11px;color:var(--t3)" id="fcc">1/${FCS.length}</span></div><div style="text-align:center;margin:18px 0"><div class="fc" id="fcard"><div class="fc-i" id="fci"><div class="fc-f" id="fcf">${FCS[0].f}</div><div class="fc-b" id="fcb">${FCS[0].b}</div></div></div><div style="margin-top:14px;display:flex;gap:6px;justify-content:center"><button class="btn btn-o" id="fcp">← Prev</button><button class="btn btn-p" id="fcn">Next →</button></div><p style="font-size:10px;color:var(--t3);margin-top:6px">Click card to flip</p></div></div></div>
+  <div id="ass-s" class="tc"><div class="cd"><div class="cd-h"><div class="ic">🎬</div><h3>Scenario Questions</h3></div>
+  <div style="padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:12px"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Scenario 1: The Zone Transfer</div><p style="font-size:11px;line-height:1.6;color:var(--t2)">During a pentest, <code>dig @ns2.gfs.com AXFR</code> succeeds, revealing 47 subdomains including db, admin, and staging.</p><div style="margin-top:10px"><div class="qo" data-sa="ok">A. Report as Critical — restrict AXFR to authorized IPs</div><div class="qo" data-sa="bad">B. Immediately attempt exploitation</div><div class="qo" data-sa="bad">C. Ignore — DNS isn't critical</div><div class="qo" data-sa="bad">D. Share zone data publicly</div></div></div>
+  <div style="padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs)"><div style="font-size:12px;font-weight:600;margin-bottom:6px">Scenario 2: Shodan Discovery</div><p style="font-size:11px;line-height:1.6;color:var(--t2)">Shodan reveals Spring Boot Actuator at /actuator/health on port 8080.</p><div style="margin-top:10px"><div class="qo" data-sa="ok">A. Document as Medium-High — info disclosure aiding further attacks</div><div class="qo" data-sa="bad">B. Ignore — health endpoints aren't vulns</div><div class="qo" data-sa="ok">C. Note Actuator can lead to RCE if /env exposed</div><div class="qo" data-sa="bad">D. Report as Critical always</div></div></div></div></div>`;
+}
+
+function rDashboard(){
+  const lv=LVLS.filter(l=>l.xp<=S.xp).pop()||LVLS[0];
+  const nx=LVLS[LVLS.indexOf(lv)+1]||lv;
+  const pg=Math.min(100,Math.round((S.xp-lv.xp)/(nx.xp-lv.xp||1)*100));
+  return `<div class="hero"><h1>📊 My Dashboard</h1><p>Track your progress.</p></div>
+  <div class="dr"><div class="dm"><div class="ml">Total XP</div><div class="mv" style="color:var(--a)">${S.xp}</div></div><div class="dm"><div class="ml">Level</div><div class="mv">${lv.i} ${lv.n}</div></div><div class="dm"><div class="ml">Labs</div><div class="mv">${S.labs.length}/4</div></div><div class="dm"><div class="ml">Quiz</div><div class="mv">${S.quiz.main||'—'}/${QUIZZES.length}</div></div></div>
+  <div style="margin:18px 0"><h3 style="font-size:13px;margin-bottom:10px">Level Progress</h3><div class="pbar"><div class="f" style="width:${pg}%"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--t3)"><span>${lv.i} ${lv.n} (${lv.xp}XP)</span><span>${nx.i} ${nx.n} (${nx.xp}XP)</span></div></div>
+  <h3 style="font-size:13px;margin:18px 0 10px">🏅 Badges</h3><div class="g4">${[{i:'🔬',n:'First Lab',d:'Complete a lab',c:S.labs.length>=1},{i:'📝',n:'Quiz Taker',d:'Take the quiz',c:!!S.quiz.main},{i:'🔍',n:'DNS Explorer',d:'Study DNS',c:S.done.includes('dns')},{i:'🕵️',n:'OSINT Pro',d:'Passive recon',c:S.done.includes('passive')},{i:'⚡',n:'Active Scanner',d:'Active recon',c:S.done.includes('active')},{i:'👑',n:'Recon Expert',d:'500+ XP',c:S.xp>=500}].map(b=>`<div class="bgc ${b.c?'earn':''}"><div class="bi">${b.i}</div><div style="font-size:10px;font-weight:600;color:var(--t2)">${b.n}</div><div style="font-size:9px;color:var(--t3);margin-top:2px">${b.d}</div></div>`).join('')}</div>`;
+}
+
+function rAIRecon(){
+  return `<div class="hero"><h1>🧠 AI Recon Assistant</h1><p>Plan your recon strategy with AI-guided workflow.</p></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🎯</div><h3>Recon Workflow Builder</h3></div>
+  <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Target:</label><select style="background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rx);padding:7px 10px;color:var(--t1);width:100%;font-size:12px"><option>GFS Financial (gfs-financial.com)</option><option>GFS Insurance (gfs-insurance.com)</option></select></div>
+  <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Objectives:</label><div class="bg">${['Subdomain Discovery','Email Harvesting','Tech Fingerprinting','Employee Profiling','Cloud Mapping'].map(o=>`<button class="btn btn-o btn-s" onclick="this.classList.toggle('btn-p');this.classList.toggle('btn-o')">${o}</button>`).join('')}</div></div>
+  <div style="margin-bottom:12px"><label style="font-size:11px;color:var(--t3);display:block;margin-bottom:4px">Constraints:</label><div class="bg">${['Passive Only','Include Active','Stealth Mode','Full Speed'].map(c=>`<button class="btn btn-o btn-s" onclick="this.classList.toggle('btn-p');this.classList.toggle('btn-o')">${c}</button>`).join('')}</div></div>
+  <button class="btn btn-p" id="aigen" style="width:100%">🧠 Generate Strategy</button><div id="aiout" style="margin-top:14px"></div></div>`;
+}
+
+function rTwin(){
+  return `<div class="hero"><h1>🏗️ GFS Digital Twin</h1><p>Interactive infrastructure visualization. Click any node to explore.</p></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🌐</div><h3>Attack Surface Map</h3></div><div class="svg-c"><svg width="780" height="480" viewBox="0 0 780 480">
+<g class="sn" data-goto="overview"><rect x="320" y="8" width="130" height="44" rx="22" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="385" y="35" fill="var(--t1)" font-size="12" text-anchor="middle" font-weight="600">🌐 Internet</text></g>
+<g class="sn" data-goto="dns"><rect x="90" y="90" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="155" y="117" fill="var(--t1)" font-size="11" text-anchor="middle">🔗 DNS Servers</text></g>
+<g class="sn" data-goto="company"><rect x="320" y="90" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="385" y="117" fill="var(--t1)" font-size="11" text-anchor="middle">🏢 Domains (4)</text></g>
+<g class="sn" data-goto="overview"><rect x="550" y="90" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="615" y="117" fill="var(--t1)" font-size="11" text-anchor="middle">☁️ AWS + Azure</text></g>
+<g class="sn" data-goto="dns"><rect x="320" y="175" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--a)" stroke-width="2"/><text x="385" y="202" fill="var(--al)" font-size="11" text-anchor="middle" font-weight="600">📡 Subdomains (10+)</text></g>
+<g class="sn" data-goto="techfp"><rect x="90" y="260" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="155" y="287" fill="var(--t1)" font-size="11" text-anchor="middle">🖥️ Web Servers</text></g>
+<g class="sn" data-goto="email"><rect x="320" y="260" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="385" y="287" fill="var(--t1)" font-size="11" text-anchor="middle">📧 Email (Exchange)</text></g>
+<g class="sn" data-goto="email"><rect x="550" y="260" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="615" y="287" fill="var(--t1)" font-size="11" text-anchor="middle">👥 Employees (12.5K)</text></g>
+<g class="sn" data-goto="techfp"><rect x="90" y="345" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="155" y="372" fill="var(--t1)" font-size="11" text-anchor="middle">🔧 Tech Stack</text></g>
+<g class="sn" data-goto="osint"><rect x="320" y="345" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="385" y="372" fill="var(--t1)" font-size="11" text-anchor="middle">📱 Social Media</text></g>
+<g class="sn" data-goto="overview"><rect x="550" y="345" width="130" height="44" rx="8" fill="var(--bg2)" stroke="var(--b2)" stroke-width="1.5"/><text x="615" y="372" fill="var(--t1)" font-size="11" text-anchor="middle">💻 GitHub Repos</text></g>
+<g class="sn" data-goto="report"><rect x="320" y="425" width="130" height="40" rx="8" fill="rgba(255,82,82,.08)" stroke="var(--err)" stroke-width="2"/><text x="385" y="450" fill="var(--err)" font-size="11" text-anchor="middle" font-weight="600">🎯 Attack Surface</text></g>
+<line class="sl" x1="385" y1="52" x2="155" y2="90"/><line class="sl" x1="385" y1="52" x2="385" y2="90"/><line class="sl" x1="385" y1="52" x2="615" y2="90"/>
+<line class="sl" x1="155" y1="134" x2="385" y2="175"/><line class="sl" x1="385" y1="134" x2="385" y2="175"/><line class="sl" x1="615" y1="134" x2="385" y2="175"/>
+<line class="sl on" x1="385" y1="219" x2="155" y2="260"/><line class="sl on" x1="385" y1="219" x2="385" y2="260"/><line class="sl on" x1="385" y1="219" x2="615" y2="260"/>
+<line class="sl" x1="155" y1="304" x2="155" y2="345"/><line class="sl" x1="385" y1="304" x2="385" y2="345"/><line class="sl" x1="615" y1="304" x2="615" y2="345"/>
+<line class="sl" x1="155" y1="389" x2="385" y2="425"/><line class="sl" x1="385" y1="389" x2="385" y2="425"/><line class="sl" x1="615" y1="389" x2="385" y2="425"/>
+</svg></div><div class="ib">💡 Click any node to navigate to its learning section.</div></div>`;
+}
+
+function rSOC(){
+  return `<div class="hero"><h1>🛡️ SOC Detection View</h1><p>Blue team perspective — detecting reconnaissance activity.</p></div>
+  <div class="g2"><div class="cd"><div class="cd-h"><div class="ic">🔍</div><h3>Detecting Passive Recon</h3></div><p style="font-size:11px;line-height:1.7;margin-bottom:10px">Passive recon is <strong>extremely hard</strong> to detect. Countermeasures:</p><ul style="font-size:11px;line-height:2;padding-left:18px"><li><strong>CT log monitoring</strong> for unauthorized cert requests</li><li><strong>Shodan/Censys</strong> monitoring services</li><li><strong>GitHub auditing</strong> with git-secrets/truffleHog</li><li><strong>Search Console</strong> for indexing review</li><li><strong>Social media alerts</strong> for brand mentions</li></ul></div>
+  <div class="cd"><div class="cd-h"><div class="ic">🚨</div><h3>Detecting Active Recon</h3></div><p style="font-size:11px;line-height:1.7;margin-bottom:10px">Active recon <strong>can be detected</strong>:</p><ul style="font-size:11px;line-height:2;padding-left:18px"><li><strong>IDS/IPS:</strong> Snort/Suricata signatures for scanners</li><li><strong>DNS monitoring:</strong> High query volumes, AXFR attempts</li><li><strong>WAF logs:</strong> High 404/403 rates, scanner user-agents</li><li><strong>Firewall:</strong> Port scan detection</li><li><strong>Honeypots:</strong> Decoy services to track scanners</li></ul></div></div>
+  <div class="cd" style="margin-top:14px"><div class="cd-h"><div class="ic">📊</div><h3>SIEM Detection Rules</h3></div><div class="cb" style="font-size:10px"><span class="i"># Snort: Nmap SYN Scan</span>\nalert tcp any any -> $HOME_NET any (msg:"Nmap SYN Scan"; flags:S; threshold:type threshold, track by_src, count 100, seconds 60; sid:1000001;)\n\n<span class="i"># Snort: Zone Transfer Attempt</span>\nalert tcp any any -> $HOME_NET 53 (msg:"DNS AXFR"; content:"|00 00 FC|"; sid:1000002;)\n\n<span class="i"># Suricata: Directory Enum</span>\nalert http any any -> $HOME_NET any (msg:"Dir Enum"; http.response_code >= 400; threshold:type both, track by_src, count 50, seconds 30; sid:1000003;)</div></div>`;
+}
+
+function rReport(){
+  return `<div class="hero"><h1>📋 Final Recon Report</h1><p>Consolidate findings into a professional assessment report.</p></div>
+  <div class="cd"><div class="cd-h"><div class="ic">📄</div><h3>GFS Recon Report</h3></div>
+  <div style="padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:12px"><h4 style="color:var(--al);margin-bottom:6px;font-size:13px">1. Executive Summary</h4><p style="font-size:11px;color:var(--t2);line-height:1.7">Recon of GFS revealed 4 domains, 10+ subdomains, 12,500 employees, AWS+Azure infrastructure. Critical: DNS zone transfer misconfiguration, exposed Spring Boot Actuator.</p></div>
+  <div style="padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:12px"><h4 style="color:var(--al);margin-bottom:6px;font-size:13px">2. Critical Findings</h4><div style="margin:5px 0"><span class="tp" style="background:rgba(255,82,82,.12);color:var(--err)">CRITICAL</span> DNS Zone Transfer on ns2 — reveals all internal hosts</div><div style="margin:5px 0"><span class="tp" style="background:rgba(255,176,0,.12);color:var(--warn)">HIGH</span> Spring Boot Actuator exposed on :8080</div><div style="margin:5px 0"><span class="tp" style="background:rgba(255,176,0,.12);color:var(--warn)">HIGH</span> MySQL 3306 open to internet</div><div style="margin:5px 0"><span class="tp" style="background:rgba(64,196,255,.12);color:var(--inf)">MEDIUM</span> Nginx 1.18 outdated, server headers leak info</div></div>
+  <div style="padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:12px"><h4 style="color:var(--al);margin-bottom:6px;font-size:13px">3. MITRE ATT&CK</h4><div class="bg"><span class="tp mt">T1595</span><span class="tp mt">T1589</span><span class="tp mt">T1590</span><span class="tp mt">T1592</span><span class="tp mt">T1596</span></div></div>
+  <div style="padding:14px;background:var(--glass);border:1px solid var(--b1);border-radius:var(--rs)"><h4 style="color:var(--ok);margin-bottom:6px;font-size:13px">4. Recommendations</h4><ul style="font-size:11px;line-height:2;padding-left:18px"><li>Restrict DNS AXFR to authorized IPs</li><li>Disable/restrict Actuator endpoints</li><li>Close MySQL from external access</li><li>Update Nginx, remove tech headers</li><li>Implement WAF rate limiting</li><li>Regular CT log monitoring</li></ul></div></div>`;
+}
+
+/* ===================== EVENT DELEGATION ===================== */
+function initSec(id){
+  if(id==='tools'){
+    const sg=document.getElementById('tsearch');
+    if(sg)sg.addEventListener('input',()=>{
+      const q=sg.value.toLowerCase();
+      const grid=document.getElementById('tgrid');
+      const t=TOOLS.filter(x=>x.n.toLowerCase().includes(q)||x.d.toLowerCase().includes(q)||x.cat.toLowerCase().includes(q));
+      grid.innerHTML=t.map(x=>`<div class="cd" data-tool="${x.n}" style="cursor:pointer"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:22px">${x.icon}</div><div><div style="font-size:13px;font-weight:600">${x.n}</div><div style="font-size:9px;color:var(--t3)">${x.cat}</div></div><span class="tg tg-${x.typ==='passive'?'p':'a'}" style="margin-left:auto">${x.typ.toUpperCase()}</span></div><p style="font-size:11px;color:var(--t2);line-height:1.5">${x.d}</p></div>`).join('');
+    });
+    const ttabs=document.getElementById('ttabs');
+    if(ttabs)ttabs.addEventListener('click',e=>{
+      const tb=e.target.closest('.tb');if(!tb)return;
+      ttabs.querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));tb.classList.add('on');
+      document.getElementById('tgrid').innerHTML=renderToolGrid(tb.dataset.cat);
+    });
+  }
+  if(id==='playground'){
+    const inp=document.getElementById('tinp');
+    if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){runCmd(inp.value);inp.value=''}});
+  }
+  if(id==='assess'){
+    const fc=document.getElementById('fcard');
+    if(fc)fc.addEventListener('click',()=>fc.classList.toggle('fl'));
+    const fcp=document.getElementById('fcp'),fcn=document.getElementById('fcn');
+    if(fcp)fcp.addEventListener('click',()=>{S.fcIdx=(S.fcIdx-1+FCS.length)%FCS.length;updFC()});
+    if(fcn)fcn.addEventListener('click',()=>{S.fcIdx=(S.fcIdx+1)%FCS.length;updFC()});
+  }
+  if(id==='airecon'){
+    const btn=document.getElementById('aigen');
+    if(btn)btn.addEventListener('click',()=>{
+      document.getElementById('aiout').innerHTML=`<div class="cd" style="border-color:var(--a)"><h4 style="font-size:13px;margin-bottom:10px;color:var(--al)">📋 Recon Strategy for GFS</h4><div class="tl">${[{t:'Phase 1: Passive OSINT',d:'WHOIS → DNS → CT logs → Search engines → Social media → GitHub'},{t:'Phase 2: Subdomain Enum',d:'Amass (passive) → Subfinder → crt.sh → SecurityTrails'},{t:'Phase 3: Tech Profiling',d:'Shodan → BuiltWith → HTTP headers → robots.txt'},{t:'Phase 4: People Intel',d:'LinkedIn → Email harvesting → Job postings'},{t:'Phase 5: Active Probing',d:'Nmap → Banner grab → Dir enum → Zone transfer test'},{t:'Phase 6: Reporting',d:'Consolidate → MITRE mapping → Risk assessment'}].map(s=>`<div class="tli"><h4>${s.t}</h4><p>${s.d}</p></div>`).join('')}</div><div style="margin-top:12px"><div class="bg"><span class="tp mt">T1595</span><span class="tp mt">T1589</span><span class="tp mt">T1590</span><span class="tp mt">T1592</span><span class="tp mt">T1593</span></div></div></div>`;
+      addXP(10);
+    });
+  }
+}
+
+function updFC(){
+  document.getElementById('fcard').classList.remove('fl');
+  document.getElementById('fcf').textContent=FCS[S.fcIdx].f;
+  document.getElementById('fcb').textContent=FCS[S.fcIdx].b;
+  document.getElementById('fcc').textContent=`${S.fcIdx+1}/${FCS.length}`;
+}
+
+function runCmd(cmd){
+  cmd=cmd.trim();if(!cmd)return;
+  const tb=document.getElementById('tb');
+  tb.innerHTML+=`<span class="p">$ </span>${cmd}\n`;
+  const out=TOUT[cmd]||TOUT[cmd.split(' ').slice(0,2).join(' ')]||`[simulated] ${cmd}\n[info] Training environment. Try: whois, dig, nmap, curl, theHarvester, amass, subfinder, dnsrecon, shodan`;
+  tb.innerHTML+=out+'\n\n';
+  tb.scrollTop=tb.scrollHeight;
+  addXP(2);
+}
+
+/* ===================== GLOBAL EVENT DELEGATION ===================== */
+document.addEventListener('click',e=>{
+  // Nav
+  const ni=e.target.closest('.ni[data-nav]');
+  if(ni){showSec(ni.dataset.nav);return}
+  // Goto
+  const gt=e.target.closest('[data-goto]');
+  if(gt){showSec(gt.dataset.goto);return}
+  // Tool click
+  const tc=e.target.closest('[data-tool]');
+  if(tc){showTool(tc.dataset.tool);return}
+  // Lab button
+  const lb=e.target.closest('[data-lab]');
+  if(lb){const id='lab'+lb.dataset.lab;if(!S.labs.includes(id)){S.labs.push(id);addXP(50);toast('✅ Lab completed! +50 XP','ok');save()}else toast('Already completed','inf');return}
+  // Quiz option
+  const qo=e.target.closest('.qo[data-qi]');
+  if(qo){
+    const qi=+qo.dataset.qi,oi=+qo.dataset.oi;
+    qo.closest('.qq').querySelectorAll('.qo').forEach(x=>x.classList.remove('sel','ok','bad'));
+    qo.classList.add('sel');
+    qo.dataset.chosen=oi;
+    return;
+  }
+  // Scenario answer
+  const sa=e.target.closest('[data-sa]');
+  if(sa){
+    const v=sa.dataset.sa;
+    sa.parentElement.querySelectorAll('[data-sa]').forEach(x=>{x.classList.remove('ok','bad');if(x.dataset.sa==='ok')x.classList.add('ok');if(x===sa&&v==='bad')x.classList.add('bad')});
+    if(v==='ok')sa.classList.add('ok');
+    return;
+  }
+  // Quiz submit
+  if(e.target.id==='qsub'){
+    let score=0;
+    document.querySelectorAll('.qq').forEach((qq,i)=>{
+      const chosen=qq.querySelector('.qo.sel');
+      const ci=chosen?+chosen.dataset.chosen:-1;
+      qq.querySelectorAll('.qo').forEach((o,j)=>{if(j===QUIZZES[i].a)o.classList.add('ok');if(ci===j&&j!==QUIZZES[i].a)o.classList.add('bad')});
+      if(ci===QUIZZES[i].a)score++;
+      const qe=qq.querySelector('.qe');if(qe){qe.style.display='block';qe.textContent=QUIZZES[i].e}
+    });
+    document.getElementById('qres').innerHTML=`<div class="${score>=7?'sb':score>=5?'wb':'db'}">Score: <strong>${score}/${QUIZZES.length}</strong> (${Math.round(score/QUIZZES.length*100)}%)</div>`;
+    S.quiz.main=score;addXP(score*10);save();
+    return;
+  }
+  // Tab click
+  const tb=e.target.closest('.tb[data-t]');
+  if(tb){
+    const tg=tb.closest('.tbs').dataset.tg;
+    tb.closest('.tbs').querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));
+    tb.classList.add('on');
+    document.querySelectorAll(`.tc[id^="${tg}"]`).forEach(x=>x.classList.remove('on'));
+    const target=document.getElementById(tb.dataset.t);
+    if(target)target.classList.add('on');
+    return;
+  }
+  // SVG info
+  const sn=e.target.closest('.sn[data-info]');
+  if(sn){
+    const info={computer:'Your computer checks local cache, then hosts file, then asks the DNS resolver.',resolver:'The recursive resolver (8.8.8.8, 1.1.1.1) does the actual lookup on your behalf.',root:'13 root server clusters (A-M) at the top of DNS hierarchy. Managed by ICANN, Verisign, NASA.',tld:'TLD servers manage .com, .org, .net. Verisign manages .com/.net.',auth:'The authoritative nameserver has the actual DNS records and gives the final answer.',web:'The final destination! The IP points to the actual server hosting the website.'};
+    openModal('DNS Component',info[sn.dataset.info]||'Component info');
+    return;
+  }
+  // SVG subdomain
+  const sub=e.target.closest('.sn[data-sub]');
+  if(sub){
+    const s=GFS.subs2.find(x=>x.s===sub.dataset.sub);
+    if(s)openModal(s.s+'.gfs-financial.com',`IP: ${s.ip}<br>Technology: ${s.t}<br>Purpose: ${s.p}`);
+    return;
+  }
+  // Header actions
+  const hb=e.target.closest('[data-act]');
+  if(hb){
+    const act=hb.dataset.act;
+    if(act==='aitoggle'){document.getElementById('ait').classList.toggle('show');document.getElementById('aitog').style.display=document.getElementById('ait').classList.contains('show')?'none':'';return}
+    if(act==='dashboard'){showSec('dashboard');return}
+    if(act==='closemodal'){closeModal();return}
+    if(act==='menu'){document.getElementById('sidebar').classList.toggle('open');return}
+  }
+  // AI send
+  if(e.target.closest('[data-act="aisend"]')){
+    const inp=document.getElementById('aiinp');
+    const msg=inp.value.trim();if(!msg)return;
+    const body=document.getElementById('ait-body');
+    body.innerHTML+=`<div class="am u">${msg}</div>`;
+    body.innerHTML+=`<div class="am a">${getAI(msg,S.aiLvl)}</div>`;
+    body.scrollTop=body.scrollHeight;inp.value='';addXP(3);return;
+  }
+  // AI level
+  const ailb=e.target.closest('.ai-lb[data-lvl]');
+  if(ailb){S.aiLvl=ailb.dataset.lvl;toast('AI level: '+ailb.textContent,'inf');return}
+  // Close modal on overlay
+  if(e.target.id==='modal')closeModal();
+});
+
+// AI input enter
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.id==='aiinp'){
+    const msg=e.target.value.trim();if(!msg)return;
+    const body=document.getElementById('ait-body');
+    body.innerHTML+=`<div class="am u">${msg}</div>`;
+    body.innerHTML+=`<div class="am a">${getAI(msg,S.aiLvl)}</div>`;
+    body.scrollTop=body.scrollHeight;e.target.value='';addXP(3);
+  }
+});
+
+/* ===================== BOOT ===================== */
+load();
+buildNav();
+showSec('overview');
+</script>
+</body>
+</html>

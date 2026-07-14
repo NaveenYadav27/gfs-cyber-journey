@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCyberOS } from '@/context/CyberOSContext';
 import { MODULES } from '@/data/curriculum';
-import { Shield, Lock, CheckCircle, Clock, Terminal, Activity, ArrowRight } from 'lucide-react';
+import { Shield, Lock, CheckCircle, Clock, Terminal, Activity, ArrowRight, Sparkles, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -30,6 +30,41 @@ function ModulesList() {
         <p className="text-slate-400 mt-2 max-w-3xl">
           The GFS structural contextualization training framework. Modules must be completed sequentially to ensure prerequisite knowledge is established before advancing to more complex enterprise environments.
         </p>
+      </div>
+
+      {/* Experience Platforms */}
+      <div>
+        <div className="flex items-center space-x-3 mb-4">
+          <Sparkles className="text-fuchsia-400" size={22} />
+          <h2 className="text-xl font-bold text-white">Enterprise Experience Platforms</h2>
+          <Badge variant="outline" className="text-fuchsia-300 border-fuchsia-500/40 bg-fuchsia-500/10">New</Badge>
+        </div>
+        <p className="text-slate-400 text-sm mb-5 max-w-3xl">
+          Immersive, self-contained enterprise learning environments. Each platform delivers diagrams, labs, commands, MITRE mapping, flashcards, and assessments for a single CEH v13 domain.
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <a
+            href="/experience/module02.html"
+            className="group relative overflow-hidden rounded-xl border border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-950/40 via-slate-900/80 to-slate-900 p-6 transition-all hover:border-fuchsia-400/60 hover:shadow-[0_0_30px_rgba(217,70,239,0.25)]"
+          >
+            <div className="absolute right-4 top-4 text-fuchsia-300/60 group-hover:text-fuchsia-300 transition-colors">
+              <ExternalLink size={18} />
+            </div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-fuchsia-300/80 mb-2">
+              Module 02 · ShadowXLab
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">Reconnaissance Experience Platform</h3>
+            <p className="text-sm text-slate-400 mb-5 leading-relaxed">
+              Passive &amp; active recon, OSINT, DNS/subdomain enumeration, cloud &amp; GitHub exposure, attack-surface digital twin, terminal simulation, and MITRE ATT&amp;CK mapping.
+            </p>
+            <div className="flex flex-wrap gap-2 text-[11px]">
+              <span className="px-2 py-1 rounded bg-slate-800/70 text-slate-300 border border-slate-700">Digital Twin</span>
+              <span className="px-2 py-1 rounded bg-slate-800/70 text-slate-300 border border-slate-700">Interactive Labs</span>
+              <span className="px-2 py-1 rounded bg-slate-800/70 text-slate-300 border border-slate-700">MITRE Mapping</span>
+              <span className="px-2 py-1 rounded bg-slate-800/70 text-slate-300 border border-slate-700">Assessment</span>
+            </div>
+          </a>
+        </div>
       </div>
 
       <div className="space-y-16">
